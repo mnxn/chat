@@ -1,5 +1,14 @@
 package protocol
 
+import (
+	"io"
+)
+
+type ServerResponse interface {
+	EncodeResponse(io.Writer) error
+	DecodeResponse(io.Reader) error
+}
+
 type ResponseType uint32
 
 const (
