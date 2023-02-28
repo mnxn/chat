@@ -12,7 +12,7 @@ type ClientRequest interface {
 type RequestType uint32
 
 const (
-	Connect RequestType = iota
+	Connect RequestType = 1 + iota
 	Disconnect
 	ListRooms
 	ListUsers

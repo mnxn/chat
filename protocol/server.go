@@ -12,7 +12,7 @@ type ServerResponse interface {
 type ResponseType uint32
 
 const (
-	Error ResponseType = iota
+	Error ResponseType = 1 + iota
 	FatalError
 	RoomList
 	UserList
@@ -23,7 +23,7 @@ const (
 type ErrorType uint32
 
 const (
-	Disconnection ErrorType = iota
+	Disconnection ErrorType = 1 + iota
 	InternalError
 	MalformedRequest
 	UnsupportedVersion
