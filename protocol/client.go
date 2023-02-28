@@ -1,5 +1,14 @@
 package protocol
 
+import (
+	"io"
+)
+
+type ClientRequest interface {
+	EncodeRequest(io.Writer) error
+	DecodeRequest(io.Reader) error
+}
+
 type RequestType uint32
 
 const (
