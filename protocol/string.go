@@ -24,18 +24,19 @@ func encodeString(w io.Writer, s string) error {
 	return nil
 }
 
-func decodeString(r io.Reader) (string, error) {
+func decodeString(r io.Reader, s *string) error {
 	var length uint32
 	err := binary.Read(r, byteOrder, &length)
 	if err != nil {
-		return "", fmt.Errorf("decode StringData.length: %w", err)
+		return fmt.Errorf("decode StringData.length: %w", err)
 	}
 
 	bytes := make([]byte, length)
 	err = binary.Read(r, byteOrder, &bytes)
 	if err != nil {
-		return "", fmt.Errorf("decode StringData.data: %w", err)
+		return fmt.Errorf("decode StringData.data: %w", err)
 	}
 
-	return string(bytes), nil
+	*s = string(bytes)
+	return nil
 }

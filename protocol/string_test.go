@@ -47,7 +47,8 @@ func TestEncodeString(t *testing.T) {
 
 func TestDecodeString(t *testing.T) {
 	for _, test := range stringTests {
-		actual, err := decodeString(bytes.NewReader(test.bytes))
+		var actual string
+		err := decodeString(bytes.NewReader(test.bytes), &actual)
 		if err != nil {
 			generic.TestError(t, "decodeString", test.bytes, err)
 			continue
@@ -72,9 +73,10 @@ func FuzzRoundtripString(f *testing.F) {
 			generic.TestError(t, "encodeString", input, err)
 			return
 		}
-
 		encoded := buf.Bytes()
-		decoded, err := decodeString(&buf)
+
+		var decoded string
+		err = decodeString(&buf, &decoded)
 		if err != nil {
 			generic.TestError(t, "decodeString", encoded, err)
 			return
