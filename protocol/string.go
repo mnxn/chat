@@ -11,7 +11,7 @@ var byteOrder = binary.BigEndian
 func encodeString(w io.Writer, s string) error {
 	bytes := []byte(s)
 
-	err := binary.Write(w, byteOrder, int32(len(bytes)))
+	err := binary.Write(w, byteOrder, uint32(len(bytes)))
 	if err != nil {
 		return fmt.Errorf("encode StringData.Length: %w", err)
 	}
