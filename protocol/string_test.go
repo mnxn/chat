@@ -3,6 +3,7 @@ package protocol
 import (
 	"bytes"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/mnxn/chat/generic"
 )
@@ -32,15 +33,14 @@ func TestEncodeString(t *testing.T) {
 	for _, test := range stringTests {
 		var buf bytes.Buffer
 		err := encodeString(&buf, test.string)
-		if err != nil {
-			generic.TestError(t, "encodeString", test.bytes, err)
+		if !generic.TestError(t, "encodeString", test.string, nil, err) {
 			continue
 		}
 
 		actual := buf.Bytes()
 
-		if !generic.SliceEqual(actual, test.bytes) {
-			generic.TestFailure(t, "encodeString", test.string, test.bytes, actual)
+		if !generic.TestEqualFunc(t, "encodeString", test.string, test.bytes, actual, generic.SliceEqual[byte]) {
+			continue
 		}
 	}
 }
@@ -49,13 +49,12 @@ func TestDecodeString(t *testing.T) {
 	for _, test := range stringTests {
 		var actual string
 		err := decodeString(bytes.NewReader(test.bytes), &actual)
-		if err != nil {
-			generic.TestError(t, "decodeString", test.bytes, err)
+		if !generic.TestError(t, "decodeString", test.bytes, nil, err) {
 			continue
 		}
 
-		if actual != test.string {
-			generic.TestFailure(t, "decodeString", test.bytes, test.string, actual)
+		if !generic.TestEqual(t, "decodeString", test.bytes, test.string, actual) {
+			continue
 		}
 	}
 }
@@ -69,21 +68,22 @@ func FuzzRoundtripString(f *testing.F) {
 	f.Fuzz(func(t *testing.T, input string) {
 		var buf bytes.Buffer
 		err := encodeString(&buf, input)
-		if err != nil {
-			generic.TestError(t, "encodeString", input, err)
+		if !utf8.ValidString(input) {
+			generic.TestError(t, "encodeString", input, ErrInvalidUtf8String, err)
+			return
+		} else if !generic.TestError(t, "encodeString", input, nil, err) {
 			return
 		}
 		encoded := buf.Bytes()
 
 		var decoded string
 		err = decodeString(&buf, &decoded)
-		if err != nil {
-			generic.TestError(t, "decodeString", encoded, err)
+		if !generic.TestError(t, "decodeString", encoded, nil, err) {
 			return
 		}
 
-		if decoded != input {
-			generic.TestFailure(t, "roundtrip", input, input, decoded)
+		if !generic.TestEqual(t, "roundtrip", input, input, decoded) {
+			return
 		}
 	})
 }
