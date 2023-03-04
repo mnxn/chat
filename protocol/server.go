@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrInvalidResponseType = errors.New("invalid ResponseType")
-	ErrInvalidErrorType    = errors.New("invalid ErrorType")
+	ErrInvalidResponseType = errors.New("invalid ResponseType value")
+	ErrInvalidErrorType    = errors.New("invalid ErrorType value")
 )
 
 type ServerResponse interface {
@@ -54,7 +54,7 @@ func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
 	case UserMessage:
 		response = new(UserMessageResponse)
 	default:
-		return nil, fmt.Errorf("decode ServerResponse.Type: %w", ErrInvalidResponseType)
+		return nil, fmt.Errorf("decode ServerResponse.Type(%d): %w", responseType, ErrInvalidResponseType)
 	}
 
 	err = response.decodeResponse(r)
@@ -103,12 +103,12 @@ func encodeErrorType(w io.Writer, e ErrorType) error {
 		InvalidRoom, InvalidUser, InvalidText:
 		break
 	default:
-		return ErrInvalidErrorType
+		return fmt.Errorf("encode ErrorType(%d): %w", e, ErrInvalidErrorType)
 	}
 
 	err := binary.Write(w, byteOrder, e)
 	if err != nil {
-		return fmt.Errorf("encode ErrorType: %w", err)
+		return fmt.Errorf("encode ErrorType(%d): %w", e, err)
 	}
 
 	return nil
@@ -130,7 +130,7 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 		InvalidRoom, InvalidUser, InvalidText:
 		break
 	default:
-		return ErrInvalidErrorType
+		return fmt.Errorf("decode ErrorType(%d): %w", *e, ErrInvalidErrorType)
 	}
 
 	return nil

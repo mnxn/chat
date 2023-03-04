@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-var ErrInvalidRequestType = errors.New("invalid RequestType")
+var ErrInvalidRequestType = errors.New("invalid RequestType value")
 
 type ClientRequest interface {
 	RequestType() RequestType
@@ -57,7 +57,7 @@ func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 	case LeaveRoom:
 		request = new(LeaveRoomRequest)
 	default:
-		return nil, fmt.Errorf("decode ClientRequest.Type: %w", ErrInvalidRequestType)
+		return nil, fmt.Errorf("decode ClientRequest.Type(%d): %w", requestType, ErrInvalidRequestType)
 	}
 
 	err = request.decodeRequest(r)
