@@ -10,6 +10,7 @@ import (
 var (
 	ErrInvalidServerResponse = errors.New("invalid ServerResponse")
 	ErrInvalidResponseType   = errors.New("invalid ResponseType")
+	ErrInvalidErrorType      = errors.New("invalid ErrorType")
 )
 
 type ServerResponse interface {
@@ -125,6 +126,19 @@ const (
 )
 
 func encodeErrorType(w io.Writer, e ErrorType) error {
+	switch e {
+	case Disconnection,
+		InternalError,
+		MalformedRequest,
+		UnsupportedVersion,
+		MissingRoom, MissingUser,
+		ExistingRoom, ExistingUser,
+		InvalidRoom, InvalidUser, InvalidText:
+		break
+	default:
+		return ErrInvalidErrorType
+	}
+
 	err := binary.Write(w, byteOrder, e)
 	if err != nil {
 		return fmt.Errorf("encode ErrorType: %w", err)
@@ -137,6 +151,19 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 	err := binary.Read(r, byteOrder, e)
 	if err != nil {
 		return fmt.Errorf("decode ErrorType: %w", err)
+	}
+
+	switch *e {
+	case Disconnection,
+		InternalError,
+		MalformedRequest,
+		UnsupportedVersion,
+		MissingRoom, MissingUser,
+		ExistingRoom, ExistingUser,
+		InvalidRoom, InvalidUser, InvalidText:
+		break
+	default:
+		return ErrInvalidErrorType
 	}
 
 	return nil
