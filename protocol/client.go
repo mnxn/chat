@@ -13,8 +13,8 @@ var (
 )
 
 type ClientRequest interface {
-	EncodeRequest(io.Writer) error
-	DecodeRequest(io.Reader) error
+	encodeRequest(io.Writer) error
+	decodeRequest(io.Reader) error
 }
 
 type RequestType uint32
@@ -100,7 +100,7 @@ type ConnectRequest struct {
 	Name    string
 }
 
-func (c *ConnectRequest) EncodeRequest(w io.Writer) error {
+func (c *ConnectRequest) encodeRequest(w io.Writer) error {
 	err := binary.Write(w, byteOrder, c.Version)
 	if err != nil {
 		return fmt.Errorf("encode ConnectRequest.Version: %w", err)
@@ -114,7 +114,7 @@ func (c *ConnectRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (c *ConnectRequest) DecodeRequest(r io.Reader) error {
+func (c *ConnectRequest) decodeRequest(r io.Reader) error {
 	err := binary.Read(r, byteOrder, &c.Version)
 	if err != nil {
 		return fmt.Errorf("decode ConnectRequest.Version: %w", err)
@@ -130,15 +130,15 @@ func (c *ConnectRequest) DecodeRequest(r io.Reader) error {
 
 type DisconnectRequest struct{}
 
-func (*DisconnectRequest) EncodeRequest(w io.Writer) error { return nil }
+func (*DisconnectRequest) encodeRequest(w io.Writer) error { return nil }
 
-func (*DisconnectRequest) DecodeRequest(r io.Reader) error { return nil }
+func (*DisconnectRequest) decodeRequest(r io.Reader) error { return nil }
 
 type CreateRoomRequest struct {
 	Room string
 }
 
-func (cr *CreateRoomRequest) EncodeRequest(w io.Writer) error {
+func (cr *CreateRoomRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, cr.Room)
 	if err != nil {
 		return fmt.Errorf("encode CreateRoomRequest.Room: %w", err)
@@ -147,7 +147,7 @@ func (cr *CreateRoomRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (cr *CreateRoomRequest) DecodeRequest(r io.Reader) error {
+func (cr *CreateRoomRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &cr.Room)
 	if err != nil {
 		return fmt.Errorf("decode CreateRoomRequest.Name: %w", err)
@@ -160,7 +160,7 @@ type JoinRoomRequest struct {
 	Room string
 }
 
-func (jr *JoinRoomRequest) EncodeRequest(w io.Writer) error {
+func (jr *JoinRoomRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, jr.Room)
 	if err != nil {
 		return fmt.Errorf("encode JoinRoomRequest.Room: %w", err)
@@ -169,7 +169,7 @@ func (jr *JoinRoomRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (jr *JoinRoomRequest) DecodeRequest(r io.Reader) error {
+func (jr *JoinRoomRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &jr.Room)
 	if err != nil {
 		return fmt.Errorf("decode JoinRoomRequest.Name: %w", err)
@@ -182,7 +182,7 @@ type LeaveRoomRequest struct {
 	Room string
 }
 
-func (lr *LeaveRoomRequest) EncodeRequest(w io.Writer) error {
+func (lr *LeaveRoomRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, lr.Room)
 	if err != nil {
 		return fmt.Errorf("encode LeaveRoomRequest.Room: %w", err)
@@ -191,7 +191,7 @@ func (lr *LeaveRoomRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (lr *LeaveRoomRequest) DecodeRequest(r io.Reader) error {
+func (lr *LeaveRoomRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &lr.Room)
 	if err != nil {
 		return fmt.Errorf("decode LeaveRoomRequest.Name: %w", err)
@@ -202,15 +202,15 @@ func (lr *LeaveRoomRequest) DecodeRequest(r io.Reader) error {
 
 type ListRoomsRequest struct{}
 
-func (*ListRoomsRequest) EncodeRequest(w io.Writer) error { return nil }
+func (*ListRoomsRequest) encodeRequest(w io.Writer) error { return nil }
 
-func (*ListRoomsRequest) DecodeRequest(r io.Reader) error { return nil }
+func (*ListRoomsRequest) decodeRequest(r io.Reader) error { return nil }
 
 type ListUsersRequest struct {
 	Room string
 }
 
-func (lu *ListUsersRequest) EncodeRequest(w io.Writer) error {
+func (lu *ListUsersRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, lu.Room)
 	if err != nil {
 		return fmt.Errorf("encode ListUsersRequest.Room: %w", err)
@@ -219,7 +219,7 @@ func (lu *ListUsersRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (lu *ListUsersRequest) DecodeRequest(r io.Reader) error {
+func (lu *ListUsersRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &lu.Room)
 	if err != nil {
 		return fmt.Errorf("decode ListUsersRequest.Name: %w", err)
@@ -233,7 +233,7 @@ type MessageRoomRequest struct {
 	Text string
 }
 
-func (mr *MessageRoomRequest) EncodeRequest(w io.Writer) error {
+func (mr *MessageRoomRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, mr.Room)
 	if err != nil {
 		return fmt.Errorf("encode MessageRoomRequest.Room: %w", err)
@@ -247,7 +247,7 @@ func (mr *MessageRoomRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (mr *MessageRoomRequest) DecodeRequest(r io.Reader) error {
+func (mr *MessageRoomRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &mr.Room)
 	if err != nil {
 		return fmt.Errorf("decode MessageRoomRequest.Name: %w", err)
@@ -266,7 +266,7 @@ type MessageUserRequest struct {
 	Text string
 }
 
-func (mu *MessageUserRequest) EncodeRequest(w io.Writer) error {
+func (mu *MessageUserRequest) encodeRequest(w io.Writer) error {
 	err := encodeString(w, mu.User)
 	if err != nil {
 		return fmt.Errorf("encode MessageUserRequest.User: %w", err)
@@ -280,7 +280,7 @@ func (mu *MessageUserRequest) EncodeRequest(w io.Writer) error {
 	return nil
 }
 
-func (mu *MessageUserRequest) DecodeRequest(r io.Reader) error {
+func (mu *MessageUserRequest) decodeRequest(r io.Reader) error {
 	err := decodeString(r, &mu.User)
 	if err != nil {
 		return fmt.Errorf("decode MessageUserRequest.User: %w", err)

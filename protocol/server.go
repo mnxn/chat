@@ -13,8 +13,8 @@ var (
 )
 
 type ServerResponse interface {
-	EncodeResponse(io.Writer) error
-	DecodeResponse(io.Reader) error
+	encodeResponse(io.Writer) error
+	decodeResponse(io.Reader) error
 }
 
 type ResponseType uint32
@@ -119,7 +119,7 @@ type ErrorResponse struct {
 	Info  string
 }
 
-func (e *ErrorResponse) EncodeResponse(w io.Writer) error {
+func (e *ErrorResponse) encodeResponse(w io.Writer) error {
 	err := encodeErrorType(w, e.Error)
 	if err != nil {
 		return fmt.Errorf("encode ErrorResponse.Error: %w", err)
@@ -133,7 +133,7 @@ func (e *ErrorResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (e *ErrorResponse) DecodeResponse(r io.Reader) error {
+func (e *ErrorResponse) decodeResponse(r io.Reader) error {
 	err := decodeErrorType(r, &e.Error)
 	if err != nil {
 		return fmt.Errorf("decode ErrorResponse.Error: %w", err)
@@ -152,7 +152,7 @@ type FatalErrorResponse struct {
 	Info  string
 }
 
-func (fe *FatalErrorResponse) EncodeResponse(w io.Writer) error {
+func (fe *FatalErrorResponse) encodeResponse(w io.Writer) error {
 	err := encodeErrorType(w, fe.Error)
 	if err != nil {
 		return fmt.Errorf("encode FatalErrorResponse.Error: %w", err)
@@ -166,7 +166,7 @@ func (fe *FatalErrorResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (fe *FatalErrorResponse) DecodeResponse(r io.Reader) error {
+func (fe *FatalErrorResponse) decodeResponse(r io.Reader) error {
 	err := decodeErrorType(r, &fe.Error)
 	if err != nil {
 		return fmt.Errorf("decode FatalErrorResponse.Error: %w", err)
@@ -185,7 +185,7 @@ type RoomListResponse struct {
 	Rooms []string
 }
 
-func (rl *RoomListResponse) EncodeResponse(w io.Writer) error {
+func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 	count := uint32(len(rl.Rooms))
 	err := binary.Write(w, byteOrder, count)
 	if err != nil {
@@ -202,7 +202,7 @@ func (rl *RoomListResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (rl *RoomListResponse) DecodeResponse(r io.Reader) error {
+func (rl *RoomListResponse) decodeResponse(r io.Reader) error {
 	err := binary.Read(r, byteOrder, rl.Count)
 	if err != nil {
 		return fmt.Errorf("decode RoomListResponse.Count: %w", err)
@@ -225,7 +225,7 @@ type UserListResponse struct {
 	Users []string
 }
 
-func (ul *UserListResponse) EncodeResponse(w io.Writer) error {
+func (ul *UserListResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, ul.Room)
 	if err != nil {
 		return fmt.Errorf("encode UserListResponse.Room: %w", err)
@@ -247,7 +247,7 @@ func (ul *UserListResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (ul *UserListResponse) DecodeResponse(r io.Reader) error {
+func (ul *UserListResponse) decodeResponse(r io.Reader) error {
 	err := decodeString(r, &ul.Room)
 	if err != nil {
 		return fmt.Errorf("decode UserListResponse.Room: %w", err)
@@ -275,7 +275,7 @@ type RoomMessageResponse struct {
 	Text   string
 }
 
-func (rm *RoomMessageResponse) EncodeResponse(w io.Writer) error {
+func (rm *RoomMessageResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, rm.Room)
 	if err != nil {
 		return fmt.Errorf("encode RoomMessageResponse.Room: %w", err)
@@ -294,7 +294,7 @@ func (rm *RoomMessageResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (rm *RoomMessageResponse) DecodeResponse(r io.Reader) error {
+func (rm *RoomMessageResponse) decodeResponse(r io.Reader) error {
 	err := decodeString(r, &rm.Room)
 	if err != nil {
 		return fmt.Errorf("decode RoomMessageResponse.Room: %w", err)
@@ -318,7 +318,7 @@ type UserMessageResponse struct {
 	Text   string
 }
 
-func (um *UserMessageResponse) EncodeResponse(w io.Writer) error {
+func (um *UserMessageResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, um.Sender)
 	if err != nil {
 		return fmt.Errorf("encode UserMessageResponse.Sender: %w", err)
@@ -332,7 +332,7 @@ func (um *UserMessageResponse) EncodeResponse(w io.Writer) error {
 	return nil
 }
 
-func (um *UserMessageResponse) DecodeResponse(r io.Reader) error {
+func (um *UserMessageResponse) decodeResponse(r io.Reader) error {
 	err := decodeString(r, &um.Sender)
 	if err != nil {
 		return fmt.Errorf("decode UserMessageResponse.Sender: %w", err)
