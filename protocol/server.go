@@ -1,6 +1,8 @@
 package protocol
 
 import (
+	"encoding/binary"
+	"fmt"
 	"io"
 )
 
@@ -36,9 +38,55 @@ const (
 	InvalidText
 )
 
+func encodeErrorType(w io.Writer, e ErrorType) error {
+	err := binary.Write(w, byteOrder, e)
+	if err != nil {
+		return fmt.Errorf("encode ErrorType: %w", err)
+	}
+
+	return nil
+}
+
+func decodeErrorType(r io.Reader, e *ErrorType) error {
+	err := binary.Read(r, byteOrder, e)
+	if err != nil {
+		return fmt.Errorf("decode ErrorType: %w", err)
+	}
+
+	return nil
+}
+
 type ErrorResponse struct {
 	Error ErrorType
 	Info  string
+}
+
+func (e *ErrorResponse) EncodeResponse(w io.Writer) error {
+	err := encodeErrorType(w, e.Error)
+	if err != nil {
+		return fmt.Errorf("encode ErrorResponse.Error: %w", err)
+	}
+
+	err = encodeString(w, e.Info)
+	if err != nil {
+		return fmt.Errorf("encode ErrorResponse.Info: %w", err)
+	}
+
+	return nil
+}
+
+func (e *ErrorResponse) DecodeResponse(r io.Reader) error {
+	err := decodeErrorType(r, &e.Error)
+	if err != nil {
+		return fmt.Errorf("decode ErrorResponse.Error: %w", err)
+	}
+
+	err = decodeString(r, &e.Info)
+	if err != nil {
+		return fmt.Errorf("decode ErrorResponse.Info: %w", err)
+	}
+
+	return nil
 }
 
 type FatalErrorResponse struct {
@@ -46,9 +94,71 @@ type FatalErrorResponse struct {
 	Info  string
 }
 
+func (fe *FatalErrorResponse) EncodeResponse(w io.Writer) error {
+	err := encodeErrorType(w, fe.Error)
+	if err != nil {
+		return fmt.Errorf("encode FatalErrorResponse.Error: %w", err)
+	}
+
+	err = encodeString(w, fe.Info)
+	if err != nil {
+		return fmt.Errorf("encode FatalErrorResponse.Info: %w", err)
+	}
+
+	return nil
+}
+
+func (fe *FatalErrorResponse) DecodeResponse(r io.Reader) error {
+	err := decodeErrorType(r, &fe.Error)
+	if err != nil {
+		return fmt.Errorf("decode FatalErrorResponse.Error: %w", err)
+	}
+
+	err = decodeString(r, &fe.Info)
+	if err != nil {
+		return fmt.Errorf("decode FatalErrorResponse.Info: %w", err)
+	}
+
+	return nil
+}
+
 type RoomListResponse struct {
 	Count uint32
 	Rooms []string
+}
+
+func (rl *RoomListResponse) EncodeResponse(w io.Writer) error {
+	count := uint32(len(rl.Rooms))
+	err := binary.Write(w, byteOrder, count)
+	if err != nil {
+		return fmt.Errorf("encode RoomListResponse.Count: %w", err)
+	}
+
+	for i, room := range rl.Rooms {
+		err = encodeString(w, room)
+		if err != nil {
+			return fmt.Errorf("encode RoomListResponse.Rooms[%d]: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (rl *RoomListResponse) DecodeResponse(r io.Reader) error {
+	err := binary.Read(r, byteOrder, rl.Count)
+	if err != nil {
+		return fmt.Errorf("decode RoomListResponse.Count: %w", err)
+	}
+	rl.Rooms = make([]string, rl.Count)
+
+	for i := uint32(0); i < rl.Count; i++ {
+		err = decodeString(r, &rl.Rooms[i])
+		if err != nil {
+			return fmt.Errorf("decode RoomListResponse.Rooms[%d]: %w", i, err)
+		}
+	}
+
+	return nil
 }
 
 type UserListResponse struct {
@@ -57,13 +167,123 @@ type UserListResponse struct {
 	Users []string
 }
 
+func (ul *UserListResponse) EncodeResponse(w io.Writer) error {
+	err := encodeString(w, ul.Room)
+	if err != nil {
+		return fmt.Errorf("encode UserListResponse.Room: %w", err)
+	}
+
+	count := uint32(len(ul.Users))
+	err = binary.Write(w, byteOrder, count)
+	if err != nil {
+		return fmt.Errorf("encode UserListResponse.Count: %w", err)
+	}
+
+	for i, user := range ul.Users {
+		err = encodeString(w, user)
+		if err != nil {
+			return fmt.Errorf("encode UserListResponse.Users[%d]: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (ul *UserListResponse) DecodeResponse(r io.Reader) error {
+	err := decodeString(r, &ul.Room)
+	if err != nil {
+		return fmt.Errorf("decode UserListResponse.Room: %w", err)
+	}
+
+	err = binary.Read(r, byteOrder, ul.Count)
+	if err != nil {
+		return fmt.Errorf("decode UserListResponse.Count: %w", err)
+	}
+	ul.Users = make([]string, ul.Count)
+
+	for i := uint32(0); i < ul.Count; i++ {
+		err = decodeString(r, &ul.Users[i])
+		if err != nil {
+			return fmt.Errorf("decode UserListResponse.Users[%d]: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
 type RoomMessageResponse struct {
 	Room   string
 	Sender string
 	Text   string
 }
 
+func (rm *RoomMessageResponse) EncodeResponse(w io.Writer) error {
+	err := encodeString(w, rm.Room)
+	if err != nil {
+		return fmt.Errorf("encode RoomMessageResponse.Room: %w", err)
+	}
+
+	err = encodeString(w, rm.Sender)
+	if err != nil {
+		return fmt.Errorf("encode RoomMessageResponse.Sender: %w", err)
+	}
+
+	err = encodeString(w, rm.Text)
+	if err != nil {
+		return fmt.Errorf("encode RoomMessageResponse.Text: %w", err)
+	}
+
+	return nil
+}
+
+func (rm *RoomMessageResponse) DecodeResponse(r io.Reader) error {
+	err := decodeString(r, &rm.Room)
+	if err != nil {
+		return fmt.Errorf("decode RoomMessageResponse.Room: %w", err)
+	}
+
+	err = decodeString(r, &rm.Sender)
+	if err != nil {
+		return fmt.Errorf("decode RoomMessageResponse.Sender: %w", err)
+	}
+
+	err = decodeString(r, &rm.Text)
+	if err != nil {
+		return fmt.Errorf("decode RoomMessageResponse.Text: %w", err)
+	}
+
+	return nil
+}
+
 type UserMessageResponse struct {
 	Sender string
 	Text   string
+}
+
+func (um *UserMessageResponse) EncodeResponse(w io.Writer) error {
+	err := encodeString(w, um.Sender)
+	if err != nil {
+		return fmt.Errorf("encode UserMessageResponse.Sender: %w", err)
+	}
+
+	err = encodeString(w, um.Text)
+	if err != nil {
+		return fmt.Errorf("encode UserMessageResponse.Text: %w", err)
+	}
+
+	return nil
+}
+
+func (um *UserMessageResponse) DecodeResponse(r io.Reader) error {
+	err := decodeString(r, &um.Sender)
+	if err != nil {
+		return fmt.Errorf("decode UserMessageResponse.Sender: %w", err)
+	}
+
+	err = decodeString(r, &um.Text)
+	if err != nil {
+		return fmt.Errorf("decode UserMessageResponse.Text: %w", err)
+	}
+
+	return nil
 }
