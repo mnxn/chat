@@ -17,6 +17,34 @@ type ClientRequest interface {
 	decodeRequest(io.Reader) error
 }
 
+func EncodeClientRequest(w io.Writer, request ClientRequest) error {
+	err := encodeRequestType(w, request)
+	if err != nil {
+		return fmt.Errorf("EncodeClientRequest: %w", err)
+	}
+
+	request.encodeRequest(w)
+	if err != nil {
+		return fmt.Errorf("EncodeClientRequest: %w", err)
+	}
+
+	return nil
+}
+
+func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
+	request, err := decodeRequestType(r)
+	if err != nil {
+		return nil, fmt.Errorf("DecodeClientRequest: %w", err)
+	}
+
+	err = request.decodeRequest(r)
+	if err != nil {
+		return nil, fmt.Errorf("DecodeClientRequest: %w", err)
+	}
+
+	return request, nil
+}
+
 type RequestType uint32
 
 const (
