@@ -2,8 +2,14 @@ package protocol
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
+)
+
+var (
+	ErrInvalidServerResponse = errors.New("invalid ServerResponse")
+	ErrInvalidResponseType   = errors.New("invalid ResponseType")
 )
 
 type ServerResponse interface {
@@ -21,6 +27,58 @@ const (
 	RoomMessage
 	UserMessage
 )
+
+func encodeResponseType(w io.Writer, response ServerResponse) error {
+	var responseType ResponseType
+	switch response.(type) {
+	case *ErrorResponse:
+		responseType = Error
+	case *FatalErrorResponse:
+		responseType = FatalError
+	case *RoomListResponse:
+		responseType = RoomList
+	case *UserListResponse:
+		responseType = UserList
+	case *RoomMessageResponse:
+		responseType = RoomMessage
+	case *UserMessageResponse:
+		responseType = UserMessage
+	default:
+		return ErrInvalidServerResponse
+	}
+
+	err := binary.Write(w, byteOrder, responseType)
+	if err != nil {
+		return fmt.Errorf("encode ResponseType: %w", err)
+	}
+
+	return nil
+}
+
+func decodeResponseType(r io.Reader) (ServerResponse, error) {
+	var responseType ResponseType
+	err := binary.Read(r, byteOrder, &responseType)
+	if err != nil {
+		return nil, fmt.Errorf("decode ResponseType: %w", err)
+	}
+
+	switch responseType {
+	case Error:
+		return new(ErrorResponse), nil
+	case FatalError:
+		return new(FatalErrorResponse), nil
+	case RoomList:
+		return new(RoomListResponse), nil
+	case UserList:
+		return new(UserListResponse), nil
+	case RoomMessage:
+		return new(RoomMessageResponse), nil
+	case UserMessage:
+		return new(UserMessageResponse), nil
+	default:
+		return nil, ErrInvalidResponseType
+	}
+}
 
 type ErrorType uint32
 
