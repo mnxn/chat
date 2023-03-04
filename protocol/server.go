@@ -17,6 +17,34 @@ type ServerResponse interface {
 	decodeResponse(io.Reader) error
 }
 
+func EncodeServerResponse(w io.Writer, response ServerResponse) error {
+	err := encodeResponseType(w, response)
+	if err != nil {
+		return fmt.Errorf("EncodeServerResponse: %w", err)
+	}
+
+	response.encodeResponse(w)
+	if err != nil {
+		return fmt.Errorf("EncodeServerResponse: %w", err)
+	}
+
+	return nil
+}
+
+func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
+	response, err := decodeResponseType(r)
+	if err != nil {
+		return nil, fmt.Errorf("DecodeServerResponse: %w", err)
+	}
+
+	err = response.decodeResponse(r)
+	if err != nil {
+		return nil, fmt.Errorf("DecodeServerResponse: %w", err)
+	}
+
+	return response, nil
+}
+
 type ResponseType uint32
 
 const (
