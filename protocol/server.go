@@ -8,39 +8,58 @@ import (
 )
 
 var (
-	ErrInvalidServerResponse = errors.New("invalid ServerResponse")
-	ErrInvalidResponseType   = errors.New("invalid ResponseType")
-	ErrInvalidErrorType      = errors.New("invalid ErrorType")
+	ErrInvalidResponseType = errors.New("invalid ResponseType")
+	ErrInvalidErrorType    = errors.New("invalid ErrorType")
 )
 
 type ServerResponse interface {
+	ResponseType() ResponseType
 	encodeResponse(io.Writer) error
 	decodeResponse(io.Reader) error
 }
 
 func EncodeServerResponse(w io.Writer, response ServerResponse) error {
-	err := encodeResponseType(w, response)
+	err := binary.Write(w, byteOrder, response.ResponseType())
 	if err != nil {
-		return fmt.Errorf("EncodeServerResponse: %w", err)
+		return fmt.Errorf("encode ServerResponse.Type: %w", err)
 	}
 
-	response.encodeResponse(w)
+	err = response.encodeResponse(w)
 	if err != nil {
-		return fmt.Errorf("EncodeServerResponse: %w", err)
+		return fmt.Errorf("encode ServerResponse: %w", err)
 	}
 
 	return nil
 }
 
 func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
-	response, err := decodeResponseType(r)
+	var responseType ResponseType
+	err := binary.Read(r, byteOrder, &responseType)
 	if err != nil {
-		return nil, fmt.Errorf("DecodeServerResponse: %w", err)
+		return nil, fmt.Errorf("decode ServerResponse.Type: %w", err)
+	}
+
+	var response ServerResponse
+	switch responseType {
+	case Error:
+		response = new(ErrorResponse)
+	case FatalError:
+		response = new(FatalErrorResponse)
+	case RoomList:
+		response = new(RoomListResponse)
+	case UserList:
+		response = new(UserListResponse)
+	case RoomMessage:
+		response = new(RoomMessageResponse)
+	case UserMessage:
+		response = new(UserMessageResponse)
+	default:
+		return nil, fmt.Errorf("decode ServerResponse.Type: %w", ErrInvalidResponseType)
 	}
 
 	err = response.decodeResponse(r)
 	if err != nil {
-		return nil, fmt.Errorf("DecodeServerResponse: %w", err)
+		return nil, fmt.Errorf("decode ServerResponse: %w", err)
 	}
 
 	return response, nil
@@ -56,58 +75,6 @@ const (
 	RoomMessage
 	UserMessage
 )
-
-func encodeResponseType(w io.Writer, response ServerResponse) error {
-	var responseType ResponseType
-	switch response.(type) {
-	case *ErrorResponse:
-		responseType = Error
-	case *FatalErrorResponse:
-		responseType = FatalError
-	case *RoomListResponse:
-		responseType = RoomList
-	case *UserListResponse:
-		responseType = UserList
-	case *RoomMessageResponse:
-		responseType = RoomMessage
-	case *UserMessageResponse:
-		responseType = UserMessage
-	default:
-		return ErrInvalidServerResponse
-	}
-
-	err := binary.Write(w, byteOrder, responseType)
-	if err != nil {
-		return fmt.Errorf("encode ResponseType: %w", err)
-	}
-
-	return nil
-}
-
-func decodeResponseType(r io.Reader) (ServerResponse, error) {
-	var responseType ResponseType
-	err := binary.Read(r, byteOrder, &responseType)
-	if err != nil {
-		return nil, fmt.Errorf("decode ResponseType: %w", err)
-	}
-
-	switch responseType {
-	case Error:
-		return new(ErrorResponse), nil
-	case FatalError:
-		return new(FatalErrorResponse), nil
-	case RoomList:
-		return new(RoomListResponse), nil
-	case UserList:
-		return new(UserListResponse), nil
-	case RoomMessage:
-		return new(RoomMessageResponse), nil
-	case UserMessage:
-		return new(UserMessageResponse), nil
-	default:
-		return nil, ErrInvalidResponseType
-	}
-}
 
 type ErrorType uint32
 
@@ -174,6 +141,8 @@ type ErrorResponse struct {
 	Info  string
 }
 
+func (*ErrorResponse) ResponseType() ResponseType { return Error }
+
 func (e *ErrorResponse) encodeResponse(w io.Writer) error {
 	err := encodeErrorType(w, e.Error)
 	if err != nil {
@@ -207,6 +176,8 @@ type FatalErrorResponse struct {
 	Info  string
 }
 
+func (*FatalErrorResponse) ResponseType() ResponseType { return FatalError }
+
 func (fe *FatalErrorResponse) encodeResponse(w io.Writer) error {
 	err := encodeErrorType(w, fe.Error)
 	if err != nil {
@@ -239,6 +210,8 @@ type RoomListResponse struct {
 	Count uint32
 	Rooms []string
 }
+
+func (*RoomListResponse) ResponseType() ResponseType { return RoomList }
 
 func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 	count := uint32(len(rl.Rooms))
@@ -279,6 +252,8 @@ type UserListResponse struct {
 	Count uint32
 	Users []string
 }
+
+func (*UserListResponse) ResponseType() ResponseType { return UserList }
 
 func (ul *UserListResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, ul.Room)
@@ -330,6 +305,8 @@ type RoomMessageResponse struct {
 	Text   string
 }
 
+func (*RoomMessageResponse) ResponseType() ResponseType { return RoomMessage }
+
 func (rm *RoomMessageResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, rm.Room)
 	if err != nil {
@@ -372,6 +349,8 @@ type UserMessageResponse struct {
 	Sender string
 	Text   string
 }
+
+func (*UserMessageResponse) ResponseType() ResponseType { return UserMessage }
 
 func (um *UserMessageResponse) encodeResponse(w io.Writer) error {
 	err := encodeString(w, um.Sender)
