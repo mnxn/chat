@@ -2,27 +2,17 @@ package generic
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 )
 
-func TestEqual[I any, O comparable](
+func TestEqual[I any, O any](
 	t *testing.T, label string, input I,
 	expected, actual O,
 ) bool {
 	t.Helper()
 
-	return TestEqualFunc(t, label, input, expected, actual, func(a, e O) bool {
-		return a == e
-	})
-}
-
-func TestEqualFunc[I any, O any](
-	t *testing.T, label string, input I,
-	expected, actual O, eq func(O, O) bool,
-) bool {
-	t.Helper()
-
-	if eq(actual, expected) {
+	if reflect.DeepEqual(actual, expected) {
 		return true
 	}
 

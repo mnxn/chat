@@ -39,7 +39,7 @@ func TestEncodeString(t *testing.T) {
 
 		actual := buf.Bytes()
 
-		if !generic.TestEqualFunc(t, "encodeString", test.string, test.bytes, actual, generic.SliceEqual[byte]) {
+		if !generic.TestEqual(t, "encodeString", test.string, test.bytes, actual) {
 			continue
 		}
 	}

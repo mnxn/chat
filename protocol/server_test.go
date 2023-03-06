@@ -56,7 +56,7 @@ func TestEncodeErrorType(t *testing.T) {
 		}
 		actual := buf.Bytes()
 
-		if !generic.TestEqualFunc(t, "encodeErrorType", test.ErrorType, test.bytes, actual, generic.SliceEqual[byte]) {
+		if !generic.TestEqual(t, "encodeErrorType", test.ErrorType, test.bytes, actual) {
 			continue
 		}
 	}
