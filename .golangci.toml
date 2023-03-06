@@ -1,0 +1,19 @@
+[linters]
+enable = [
+  "dupl",
+  "errname",
+  "exhaustive",
+  "exhaustruct",
+  "gocritic",
+  "godot",
+  "goerr113",
+  "gosec",
+  "makezero",
+  "prealloc",
+  "predeclared",
+  "revive",
+  "stylecheck",
+  "unconvert",
+  "unparam",
+  "wrapcheck",
+]
