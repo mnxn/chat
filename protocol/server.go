@@ -92,6 +92,37 @@ const (
 	InvalidText
 )
 
+func (e ErrorType) GoString() string {
+	switch e {
+	case Disconnection:
+		return "Disconnection"
+	case InternalError:
+		return "InternalError"
+	case MalformedRequest:
+		return "MalformedRequest"
+	case UnsupportedVersion:
+		return "UnsupportedVersion"
+	case MissingRoom:
+		return "MissingRoom"
+	case MissingUser:
+		return "MissingUser"
+	case ExistingRoom:
+		return "ExistingRoom"
+	case ExistingUser:
+		return "ExistingRoom"
+	case InvalidRoom:
+		return "InvalidRoom"
+	case InvalidUser:
+		return "InvalidUser"
+	case InvalidText:
+		return "InvalidText"
+	default:
+		return fmt.Sprintf("ErrorType(%d)", e)
+	}
+}
+
+func (e ErrorType) String() string { return e.GoString() }
+
 func encodeErrorType(w io.Writer, e ErrorType) error {
 	switch e {
 	case Disconnection,
@@ -130,7 +161,7 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 		InvalidRoom, InvalidUser, InvalidText:
 		break
 	default:
-		return fmt.Errorf("decode ErrorType(%d): %w", *e, ErrInvalidErrorType)
+		return fmt.Errorf("decode ErrorType(0x%08X): %w", uint32(*e), ErrInvalidErrorType)
 	}
 
 	return nil
