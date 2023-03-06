@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -16,7 +15,7 @@ type ClientRequest interface {
 }
 
 func EncodeClientRequest(w io.Writer, request ClientRequest) error {
-	err := binary.Write(w, byteOrder, request.RequestType())
+	err := encodeInt(w, request.RequestType())
 	if err != nil {
 		return fmt.Errorf("encode ClientRequest.Type: %w", err)
 	}
@@ -31,7 +30,7 @@ func EncodeClientRequest(w io.Writer, request ClientRequest) error {
 
 func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 	var requestType RequestType
-	err := binary.Read(r, byteOrder, &requestType)
+	err := decodeInt(r, &requestType)
 	if err != nil {
 		return nil, fmt.Errorf("decode ClientRequest.Type: %w", err)
 	}
@@ -90,7 +89,7 @@ type ConnectRequest struct {
 func (*ConnectRequest) RequestType() RequestType { return Connect }
 
 func (c *ConnectRequest) encodeRequest(w io.Writer) error {
-	err := binary.Write(w, byteOrder, c.Version)
+	err := encodeInt(w, c.Version)
 	if err != nil {
 		return fmt.Errorf("encode ConnectRequest.Version: %w", err)
 	}
@@ -104,7 +103,7 @@ func (c *ConnectRequest) encodeRequest(w io.Writer) error {
 }
 
 func (c *ConnectRequest) decodeRequest(r io.Reader) error {
-	err := binary.Read(r, byteOrder, &c.Version)
+	err := decodeInt(r, &c.Version)
 	if err != nil {
 		return fmt.Errorf("decode ConnectRequest.Version: %w", err)
 	}

@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -19,7 +18,7 @@ type ServerResponse interface {
 }
 
 func EncodeServerResponse(w io.Writer, response ServerResponse) error {
-	err := binary.Write(w, byteOrder, response.ResponseType())
+	err := encodeInt(w, response.ResponseType())
 	if err != nil {
 		return fmt.Errorf("encode ServerResponse.Type: %w", err)
 	}
@@ -34,7 +33,7 @@ func EncodeServerResponse(w io.Writer, response ServerResponse) error {
 
 func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
 	var responseType ResponseType
-	err := binary.Read(r, byteOrder, &responseType)
+	err := decodeInt(r, &responseType)
 	if err != nil {
 		return nil, fmt.Errorf("decode ServerResponse.Type: %w", err)
 	}
@@ -137,7 +136,7 @@ func encodeErrorType(w io.Writer, e ErrorType) error {
 		return fmt.Errorf("encode ErrorType(%d): %w", e, ErrInvalidErrorType)
 	}
 
-	err := binary.Write(w, byteOrder, e)
+	err := encodeInt(w, e)
 	if err != nil {
 		return fmt.Errorf("encode ErrorType(%d): %w", e, err)
 	}
@@ -146,7 +145,7 @@ func encodeErrorType(w io.Writer, e ErrorType) error {
 }
 
 func decodeErrorType(r io.Reader, e *ErrorType) error {
-	err := binary.Read(r, byteOrder, e)
+	err := decodeInt(r, e)
 	if err != nil {
 		return fmt.Errorf("decode ErrorType: %w", err)
 	}
@@ -246,7 +245,7 @@ func (*RoomListResponse) ResponseType() ResponseType { return RoomList }
 
 func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 	count := uint32(len(rl.Rooms))
-	err := binary.Write(w, byteOrder, count)
+	err := encodeInt(w, count)
 	if err != nil {
 		return fmt.Errorf("encode RoomListResponse.Count: %w", err)
 	}
@@ -262,7 +261,7 @@ func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 }
 
 func (rl *RoomListResponse) decodeResponse(r io.Reader) error {
-	err := binary.Read(r, byteOrder, &rl.Count)
+	err := decodeInt(r, &rl.Count)
 	if err != nil {
 		return fmt.Errorf("decode RoomListResponse.Count: %w", err)
 	}
@@ -293,7 +292,7 @@ func (ul *UserListResponse) encodeResponse(w io.Writer) error {
 	}
 
 	count := uint32(len(ul.Users))
-	err = binary.Write(w, byteOrder, count)
+	err = encodeInt(w, count)
 	if err != nil {
 		return fmt.Errorf("encode UserListResponse.Count: %w", err)
 	}
@@ -314,7 +313,7 @@ func (ul *UserListResponse) decodeResponse(r io.Reader) error {
 		return fmt.Errorf("decode UserListResponse.Room: %w", err)
 	}
 
-	err = binary.Read(r, byteOrder, &ul.Count)
+	err = decodeInt(r, &ul.Count)
 	if err != nil {
 		return fmt.Errorf("decode UserListResponse.Count: %w", err)
 	}
