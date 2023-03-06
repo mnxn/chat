@@ -9,6 +9,7 @@ enable = [
   "goerr113",
   "gosec",
   "makezero",
+  "paralleltest",
   "prealloc",
   "predeclared",
   "revive",

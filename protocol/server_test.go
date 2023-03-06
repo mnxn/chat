@@ -187,66 +187,94 @@ var serverResponseTests = []struct {
 }
 
 func TestEncodeErrorType(t *testing.T) {
-	for _, test := range errorTypeTests {
-		var buf bytes.Buffer
-		err := encodeErrorType(&buf, test.ErrorType)
-		if !generic.TestError(t, "encodeErrorType", test.ErrorType, nil, err) {
-			continue
-		}
-		actual := buf.Bytes()
+	t.Parallel()
 
-		if !generic.TestEqual(t, "encodeErrorType", test.ErrorType, test.bytes, actual) {
-			continue
-		}
+	for i := range errorTypeTests {
+		test := errorTypeTests[i]
+		t.Run("encodeErrorType", func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			err := encodeErrorType(&buf, test.ErrorType)
+			if !generic.TestError(t, "encode", test.ErrorType, nil, err) {
+				return
+			}
+			actual := buf.Bytes()
+
+			generic.TestEqual(t, "encode", test.ErrorType, test.bytes, actual)
+		})
 	}
 
-	invalidValue := ErrorType(1000)
-	err := encodeErrorType(io.Discard, invalidValue)
-	generic.TestError(t, "encodeErrorType", invalidValue, ErrInvalidErrorType, err)
+	t.Run("encodeErrorType", func(t *testing.T) {
+		t.Parallel()
+
+		invalidValue := ErrorType(1000)
+		err := encodeErrorType(io.Discard, invalidValue)
+		generic.TestError(t, "encode", invalidValue, ErrInvalidErrorType, err)
+	})
 }
 
 func TestDecodeErrorType(t *testing.T) {
-	for _, test := range errorTypeTests {
-		var actual ErrorType
-		err := decodeErrorType(bytes.NewReader(test.bytes), &actual)
-		if !generic.TestError(t, "decodeErrorType", test.bytes, nil, err) {
-			continue
-		}
+	t.Parallel()
 
-		if !generic.TestEqual(t, "decodeErrorType", test.bytes, test.ErrorType, actual) {
-			continue
-		}
+	for i := range errorTypeTests {
+		test := errorTypeTests[i]
+		t.Run("decodeErrorType", func(t *testing.T) {
+			t.Parallel()
+
+			var actual ErrorType
+			err := decodeErrorType(bytes.NewReader(test.bytes), &actual)
+			if !generic.TestError(t, "decode", test.bytes, nil, err) {
+				return
+			}
+
+			generic.TestEqual(t, "decode", test.bytes, test.ErrorType, actual)
+		})
 	}
 
-	invalidBytes := []byte{0xFF, 0xFF, 0xFF, 0xFF}
-	err := decodeErrorType(bytes.NewBuffer(invalidBytes), new(ErrorType))
-	generic.TestError(t, "decodeErrorType", invalidBytes, ErrInvalidErrorType, err)
+	t.Run("decodeErrorType", func(t *testing.T) {
+		t.Parallel()
+
+		invalidBytes := []byte{0xFF, 0xFF, 0xFF, 0xFF}
+		err := decodeErrorType(bytes.NewBuffer(invalidBytes), new(ErrorType))
+		generic.TestError(t, "decode", invalidBytes, ErrInvalidErrorType, err)
+	})
 }
 
 func TestEncodeServerResponse(t *testing.T) {
-	for _, test := range serverResponseTests {
-		var buf bytes.Buffer
-		err := EncodeServerResponse(&buf, test.ServerResponse)
-		if !generic.TestError(t, "EncodeServerResponse", test.ServerResponse, nil, err) {
-			continue
-		}
-		actual := buf.Bytes()
+	t.Parallel()
 
-		if !generic.TestEqual(t, "EncodeServerResponse", test.ServerResponse, test.bytes, actual) {
-			continue
-		}
+	for i := range serverResponseTests {
+		test := serverResponseTests[i]
+		t.Run("EncodeServerResponse", func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			err := EncodeServerResponse(&buf, test.ServerResponse)
+			if !generic.TestError(t, "encode", test.ServerResponse, nil, err) {
+				return
+			}
+			actual := buf.Bytes()
+
+			generic.TestEqual(t, "encode", test.ServerResponse, test.bytes, actual)
+		})
 	}
 }
 
 func TestDecodeServerResponse(t *testing.T) {
-	for _, test := range serverResponseTests {
-		actual, err := DecodeServerResponse(bytes.NewReader(test.bytes))
-		if !generic.TestError(t, "DecodeServerResponse", test.bytes, nil, err) {
-			continue
-		}
+	t.Parallel()
 
-		if !generic.TestEqual(t, "DecodeServerResponse", test.bytes, test.ServerResponse, actual) {
-			continue
-		}
+	for i := range serverResponseTests {
+		test := serverResponseTests[i]
+		t.Run("DecodeServerResponse", func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := DecodeServerResponse(bytes.NewReader(test.bytes))
+			if !generic.TestError(t, "decode", test.bytes, nil, err) {
+				return
+			}
+
+			generic.TestEqual(t, "decode", test.bytes, test.ServerResponse, actual)
+		})
 	}
 }

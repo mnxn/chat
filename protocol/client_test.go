@@ -129,29 +129,39 @@ var clientRequestTests = []struct {
 }
 
 func TestEncodeClientRequest(t *testing.T) {
-	for _, test := range clientRequestTests {
-		var buf bytes.Buffer
-		err := EncodeClientRequest(&buf, test.ClientRequest)
-		if !generic.TestError(t, "EncodeClientRequest", test.ClientRequest, nil, err) {
-			continue
-		}
-		actual := buf.Bytes()
+	t.Parallel()
 
-		if !generic.TestEqual(t, "EncodeClientRequest", test.ClientRequest, test.bytes, actual) {
-			continue
-		}
+	for i := range clientRequestTests {
+		test := clientRequestTests[i]
+		t.Run("EncodeClientRequest", func(t *testing.T) {
+			t.Parallel()
+
+			var buf bytes.Buffer
+			err := EncodeClientRequest(&buf, test.ClientRequest)
+			if !generic.TestError(t, "encode", test.ClientRequest, nil, err) {
+				return
+			}
+			actual := buf.Bytes()
+
+			generic.TestEqual(t, "encode", test.ClientRequest, test.bytes, actual)
+		})
 	}
 }
 
 func TestDecodeClientRequest(t *testing.T) {
-	for _, test := range clientRequestTests {
-		actual, err := DecodeClientRequest(bytes.NewReader(test.bytes))
-		if !generic.TestError(t, "DecodeClientRequest", test.bytes, nil, err) {
-			continue
-		}
+	t.Parallel()
 
-		if !generic.TestEqual(t, "DecodeClientRequest", test.bytes, test.ClientRequest, actual) {
-			continue
-		}
+	for i := range clientRequestTests {
+		test := clientRequestTests[i]
+		t.Run("DecodeClientRequest", func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := DecodeClientRequest(bytes.NewReader(test.bytes))
+			if !generic.TestError(t, "decode", test.bytes, nil, err) {
+				return
+			}
+
+			generic.TestEqual(t, "decode", test.bytes, test.ClientRequest, actual)
+		})
 	}
 }

@@ -30,32 +30,41 @@ var stringTests = []struct {
 }
 
 func TestEncodeString(t *testing.T) {
-	for _, test := range stringTests {
-		var buf bytes.Buffer
-		err := encodeString(&buf, test.string)
-		if !generic.TestError(t, "encodeString", test.string, nil, err) {
-			continue
-		}
+	t.Parallel()
 
-		actual := buf.Bytes()
+	for i := range stringTests {
+		test := stringTests[i]
+		t.Run("encodeString", func(t *testing.T) {
+			t.Parallel()
 
-		if !generic.TestEqual(t, "encodeString", test.string, test.bytes, actual) {
-			continue
-		}
+			var buf bytes.Buffer
+			err := encodeString(&buf, test.string)
+			if !generic.TestError(t, "encode", test.string, nil, err) {
+				return
+			}
+			actual := buf.Bytes()
+
+			generic.TestEqual(t, "encode", test.string, test.bytes, actual)
+		})
 	}
 }
 
 func TestDecodeString(t *testing.T) {
-	for _, test := range stringTests {
-		var actual string
-		err := decodeString(bytes.NewReader(test.bytes), &actual)
-		if !generic.TestError(t, "decodeString", test.bytes, nil, err) {
-			continue
-		}
+	t.Parallel()
 
-		if !generic.TestEqual(t, "decodeString", test.bytes, test.string, actual) {
-			continue
-		}
+	for i := range stringTests {
+		test := stringTests[i]
+		t.Run("decodeString", func(t *testing.T) {
+			t.Parallel()
+
+			var actual string
+			err := decodeString(bytes.NewReader(test.bytes), &actual)
+			if !generic.TestError(t, "decode", test.bytes, nil, err) {
+				return
+			}
+
+			generic.TestEqual(t, "decode", test.bytes, test.string, actual)
+		})
 	}
 }
 
@@ -69,21 +78,19 @@ func FuzzRoundtripString(f *testing.F) {
 		var buf bytes.Buffer
 		err := encodeString(&buf, input)
 		if !utf8.ValidString(input) {
-			generic.TestError(t, "encodeString", input, ErrInvalidUtf8String, err)
+			generic.TestError(t, "encode", input, ErrInvalidUtf8String, err)
 			return
-		} else if !generic.TestError(t, "encodeString", input, nil, err) {
+		} else if !generic.TestError(t, "encode", input, nil, err) {
 			return
 		}
 		encoded := buf.Bytes()
 
 		var decoded string
 		err = decodeString(&buf, &decoded)
-		if !generic.TestError(t, "decodeString", encoded, nil, err) {
+		if !generic.TestError(t, "decode", encoded, nil, err) {
 			return
 		}
 
-		if !generic.TestEqual(t, "roundtrip", input, input, decoded) {
-			return
-		}
+		generic.TestEqual(t, "roundtrip", input, input, decoded)
 	})
 }
