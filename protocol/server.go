@@ -262,7 +262,7 @@ func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 }
 
 func (rl *RoomListResponse) decodeResponse(r io.Reader) error {
-	err := binary.Read(r, byteOrder, rl.Count)
+	err := binary.Read(r, byteOrder, &rl.Count)
 	if err != nil {
 		return fmt.Errorf("decode RoomListResponse.Count: %w", err)
 	}
@@ -314,7 +314,7 @@ func (ul *UserListResponse) decodeResponse(r io.Reader) error {
 		return fmt.Errorf("decode UserListResponse.Room: %w", err)
 	}
 
-	err = binary.Read(r, byteOrder, ul.Count)
+	err = binary.Read(r, byteOrder, &ul.Count)
 	if err != nil {
 		return fmt.Errorf("decode UserListResponse.Count: %w", err)
 	}
