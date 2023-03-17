@@ -12,7 +12,7 @@ var errorTypeTests = []struct {
 	ErrorType
 	bytes []byte
 }{
-	{Disconnection, []byte{
+	{NotConnected, []byte{
 		0, 0, 0, 1, // uint32(1)
 	}},
 	{InternalError, []byte{

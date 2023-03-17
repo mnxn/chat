@@ -133,7 +133,7 @@ func decodeResponseType(r io.Reader, typ *ResponseType) error {
 type ErrorType uint32
 
 const (
-	Disconnection ErrorType = 1 + iota
+	NotConnected ErrorType = 1 + iota
 	InternalError
 	MalformedRequest
 	UnsupportedVersion
@@ -148,7 +148,7 @@ const (
 
 func (e ErrorType) GoString() string {
 	switch e {
-	case Disconnection:
+	case NotConnected:
 		return "Disconnection"
 	case InternalError:
 		return "InternalError"
@@ -179,7 +179,7 @@ func (e ErrorType) String() string { return e.GoString() }
 
 func encodeErrorType(w io.Writer, e ErrorType) error {
 	switch e {
-	case Disconnection,
+	case NotConnected,
 		InternalError,
 		MalformedRequest,
 		UnsupportedVersion,
@@ -206,7 +206,7 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 	}
 
 	switch *e {
-	case Disconnection,
+	case NotConnected,
 		InternalError,
 		MalformedRequest,
 		UnsupportedVersion,
