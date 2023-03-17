@@ -75,6 +75,27 @@ const (
 	UserMessage
 )
 
+func (r ResponseType) GoString() string {
+	switch r {
+	case Error:
+		return "Error"
+	case FatalError:
+		return "FatalError"
+	case RoomList:
+		return "RoomList"
+	case UserList:
+		return "UserList"
+	case RoomMessage:
+		return "RoomMessage"
+	case UserMessage:
+		return "UserMessage"
+	default:
+		return fmt.Sprintf("ResponseType(%d)", r)
+	}
+}
+
+func (r ResponseType) String() string { return r.GoString() }
+
 type ErrorType uint32
 
 const (

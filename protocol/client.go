@@ -81,6 +81,33 @@ const (
 	LeaveRoom
 )
 
+func (r RequestType) GoString() string {
+	switch r {
+	case Connect:
+		return "Connect"
+	case Disconnect:
+		return "Disconnect"
+	case ListRooms:
+		return "ListRooms"
+	case ListUsers:
+		return "ListUsers"
+	case MessageRoom:
+		return "MessageRoom"
+	case MessageUser:
+		return "MessageUser"
+	case CreateRoom:
+		return "CreateRoom"
+	case JoinRoom:
+		return "JoinRoom"
+	case LeaveRoom:
+		return "LeaveRoom"
+	default:
+		return fmt.Sprintf("RequestType(%d)", r)
+	}
+}
+
+func (r RequestType) String() string { return r.GoString() }
+
 type ConnectRequest struct {
 	Version uint32
 	Name    string
