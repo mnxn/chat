@@ -15,35 +15,38 @@ var errorTypeTests = []struct {
 	{NotConnected, []byte{
 		0, 0, 0, 1, // uint32(1)
 	}},
-	{InternalError, []byte{
+	{AlreadyConnected, []byte{
 		0, 0, 0, 2, // uint32(2)
 	}},
-	{MalformedRequest, []byte{
+	{InternalError, []byte{
 		0, 0, 0, 3, // uint32(3)
 	}},
-	{UnsupportedVersion, []byte{
+	{MalformedRequest, []byte{
 		0, 0, 0, 4, // uint32(4)
 	}},
-	{MissingRoom, []byte{
+	{UnsupportedVersion, []byte{
 		0, 0, 0, 5, // uint32(5)
 	}},
-	{MissingUser, []byte{
+	{MissingRoom, []byte{
 		0, 0, 0, 6, // uint32(6)
 	}},
-	{ExistingRoom, []byte{
+	{MissingUser, []byte{
 		0, 0, 0, 7, // uint32(7)
 	}},
-	{ExistingUser, []byte{
+	{ExistingRoom, []byte{
 		0, 0, 0, 8, // uint32(8)
 	}},
-	{InvalidRoom, []byte{
+	{ExistingUser, []byte{
 		0, 0, 0, 9, // uint32(9)
 	}},
-	{InvalidUser, []byte{
+	{InvalidRoom, []byte{
 		0, 0, 0, 10, // uint32(10)
 	}},
-	{InvalidText, []byte{
+	{InvalidUser, []byte{
 		0, 0, 0, 11, // uint32(11)
+	}},
+	{InvalidText, []byte{
+		0, 0, 0, 12, // uint32(12)
 	}},
 }
 
@@ -58,7 +61,7 @@ var serverResponseTests = []struct {
 		},
 		[]byte{
 			0, 0, 0, 1, // Error
-			0, 0, 0, 4, // UnsupportedVersion
+			0, 0, 0, 5, // UnsupportedVersion
 			0, 0, 0, 4, // uint32(4)
 			105, 110, 102, 111, // "info"
 		},
@@ -71,7 +74,7 @@ var serverResponseTests = []struct {
 		},
 		[]byte{
 			0, 0, 0, 2, // FatalError
-			0, 0, 0, 2, // InternalError
+			0, 0, 0, 3, // InternalError
 			0, 0, 0, 5, // uint32(5)
 			102, 97, 116, 97, 108, // "fatal"
 		},

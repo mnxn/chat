@@ -134,6 +134,7 @@ type ErrorType uint32
 
 const (
 	NotConnected ErrorType = 1 + iota
+	AlreadyConnected
 	InternalError
 	MalformedRequest
 	UnsupportedVersion
@@ -150,6 +151,8 @@ func (e ErrorType) GoString() string {
 	switch e {
 	case NotConnected:
 		return "Disconnection"
+	case AlreadyConnected:
+		return "AlreadyConnected"
 	case InternalError:
 		return "InternalError"
 	case MalformedRequest:
@@ -179,7 +182,7 @@ func (e ErrorType) String() string { return e.GoString() }
 
 func encodeErrorType(w io.Writer, e ErrorType) error {
 	switch e {
-	case NotConnected,
+	case NotConnected, AlreadyConnected,
 		InternalError,
 		MalformedRequest,
 		UnsupportedVersion,
@@ -206,7 +209,7 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 	}
 
 	switch *e {
-	case NotConnected,
+	case NotConnected, AlreadyConnected,
 		InternalError,
 		MalformedRequest,
 		UnsupportedVersion,
