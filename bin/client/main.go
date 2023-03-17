@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	c := client.NewClient("localhost", 5555)
+	c := client.NewClient("me", "localhost", 5555)
 	err := c.Run()
 	if err != nil {
 		fmt.Printf("client error: %s", err.Error())
