@@ -128,7 +128,7 @@ func encodeRequestType(w io.Writer, typ RequestType) error {
 func decodeRequestType(r io.Reader, typ *RequestType) error {
 	err := decodeInt(r, typ)
 	if err != nil {
-		return fmt.Errorf("decode ResponseType: %w", err)
+		return fmt.Errorf("decode RequestType: %w", err)
 	}
 
 	switch *typ {
