@@ -22,7 +22,15 @@ run-server: chat-server.exe
 	./chat-server.exe
 
 chat-client.exe: $(wildcard client/*) $(wildcard bin/client/*)
+ifdef RACE
+	go build -race -o chat-client.exe ./bin/client
+else
 	go build -o chat-client.exe ./bin/client
+endif
 
 chat-server.exe: $(wildcard server/*) $(wildcard bin/server/*)
+ifdef RACE
+	go build -race -o chat-server.exe ./bin/server
+else
 	go build -o chat-server.exe ./bin/server
+endif
