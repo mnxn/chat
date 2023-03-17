@@ -15,7 +15,7 @@ type ClientRequest interface {
 }
 
 func EncodeClientRequest(w io.Writer, request ClientRequest) error {
-	err := encodeInt(w, request.RequestType())
+	err := encodeRequestType(w, request.RequestType())
 	if err != nil {
 		return fmt.Errorf("encode ClientRequest.Type: %w", err)
 	}
@@ -30,7 +30,7 @@ func EncodeClientRequest(w io.Writer, request ClientRequest) error {
 
 func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 	var requestType RequestType
-	err := decodeInt(r, &requestType)
+	err := decodeRequestType(r, &requestType)
 	if err != nil {
 		return nil, fmt.Errorf("decode ClientRequest.Type: %w", err)
 	}
@@ -55,8 +55,6 @@ func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 		request = new(JoinRoomRequest)
 	case LeaveRoom:
 		request = new(LeaveRoomRequest)
-	default:
-		return nil, fmt.Errorf("decode ClientRequest.Type(%d): %w", requestType, ErrInvalidRequestType)
 	}
 
 	err = request.decodeRequest(r)
@@ -107,6 +105,44 @@ func (r RequestType) GoString() string {
 }
 
 func (r RequestType) String() string { return r.GoString() }
+
+func encodeRequestType(w io.Writer, typ RequestType) error {
+	switch typ {
+	case Connect, Disconnect,
+		ListRooms, ListUsers,
+		MessageRoom, MessageUser,
+		CreateRoom, JoinRoom, LeaveRoom:
+		break
+	default:
+		return fmt.Errorf("encode RequestType(%d): %w", typ, ErrInvalidRequestType)
+	}
+
+	err := encodeInt(w, typ)
+	if err != nil {
+		return fmt.Errorf("encode RequestType(%d): %w", typ, err)
+	}
+
+	return nil
+}
+
+func decodeRequestType(r io.Reader, typ *RequestType) error {
+	err := decodeInt(r, typ)
+	if err != nil {
+		return fmt.Errorf("decode ResponseType: %w", err)
+	}
+
+	switch *typ {
+	case Connect, Disconnect,
+		ListRooms, ListUsers,
+		MessageRoom, MessageUser,
+		CreateRoom, JoinRoom, LeaveRoom:
+		break
+	default:
+		return fmt.Errorf("decode RequestType(0x%08X): %w", uint32(*typ), ErrInvalidRequestType)
+	}
+
+	return nil
+}
 
 type ConnectRequest struct {
 	Version uint32
