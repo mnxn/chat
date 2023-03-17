@@ -15,6 +15,8 @@ type Client struct {
 	host string
 	port int
 
+	input    chan string
+	output   chan string
 	incoming chan protocol.ServerResponse
 	outgoing chan protocol.ClientRequest
 	done     chan struct{}
@@ -22,8 +24,11 @@ type Client struct {
 
 func NewClient(host string, port int) *Client {
 	return &Client{
-		host:     host,
-		port:     port,
+		host: host,
+		port: port,
+
+		input:    make(chan string),
+		output:   make(chan string),
 		incoming: make(chan protocol.ServerResponse),
 		outgoing: make(chan protocol.ClientRequest),
 		done:     make(chan struct{}),
@@ -39,11 +44,9 @@ func (c *Client) Run() error {
 
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Print("you> ")
 		for scanner.Scan() {
-			c.outgoing <- &protocol.MessageRoomRequest{
-				Room: "",
-				Text: scanner.Text(),
-			}
+			c.input <- scanner.Text()
 		}
 		if err := scanner.Err(); err != nil {
 			fmt.Fprintf(os.Stderr, "error reading input: %s", err)
@@ -71,13 +74,29 @@ func (c *Client) Run() error {
 
 	for {
 		select {
-		case response := <-c.incoming:
-			go c.dispatch(response)
 		case request := <-c.outgoing:
 			err = protocol.EncodeClientRequest(conn, request)
 			if err != nil {
 				return fmt.Errorf("error sending request: %w", err)
 			}
+
+		case response := <-c.incoming:
+			go c.dispatch(response)
+
+		case input := <-c.input:
+			go func() {
+				c.outgoing <- &protocol.MessageRoomRequest{
+					Room: "",
+					Text: input,
+				}
+			}()
+			fmt.Print("you> ")
+
+		case output := <-c.output:
+			fmt.Println()
+			fmt.Println(output)
+			fmt.Print("you> ")
+
 		case <-c.done:
 			return nil
 		}
@@ -88,16 +107,16 @@ func (c *Client) dispatch(response protocol.ServerResponse) {
 	switch response := response.(type) {
 	case *protocol.ErrorResponse:
 		if len(response.Info) > 0 {
-			fmt.Printf("[error] %s: %s", response.Error, response.Info)
+			c.output <- fmt.Sprintf("[error] %s: %s", response.Error, response.Info)
 		} else {
-			fmt.Printf("[error] %s", response.Error)
+			c.output <- fmt.Sprintf("[error] %s", response.Error)
 		}
 
 	case *protocol.FatalErrorResponse:
 		if len(response.Info) > 0 {
-			fmt.Printf("[fatal error] %s: %s", response.Error, response.Info)
+			c.output <- fmt.Sprintf("[fatal error] %s: %s", response.Error, response.Info)
 		} else {
-			fmt.Printf("[fatal error] %s", response.Error)
+			c.output <- fmt.Sprintf("[fatal error] %s", response.Error)
 		}
 
 	case *protocol.RoomListResponse:
@@ -108,7 +127,7 @@ func (c *Client) dispatch(response protocol.ServerResponse) {
 			sb.WriteString(room)
 			sb.WriteRune('\n')
 		}
-		fmt.Println(sb.String())
+		c.output <- sb.String()
 
 	case *protocol.UserListResponse:
 		var sb strings.Builder
@@ -122,12 +141,12 @@ func (c *Client) dispatch(response protocol.ServerResponse) {
 			sb.WriteString(room)
 			sb.WriteRune('\n')
 		}
-		fmt.Println(sb.String())
+		c.output <- sb.String()
 
 	case *protocol.RoomMessageResponse:
-		fmt.Printf("%s in %s: %s\n", response.Sender, response.Room, response.Text)
+		c.output <- fmt.Sprintf("%s in %s> %s", response.Sender, response.Room, response.Text)
 
 	case *protocol.UserMessageResponse:
-		fmt.Printf("%s to you: %s\n", response.Sender, response.Text)
+		c.output <- fmt.Sprintf("%s to you> %s", response.Sender, response.Text)
 	}
 }
