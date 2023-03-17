@@ -12,6 +12,8 @@ import (
 )
 
 type Client struct {
+	name string
+
 	host string
 	port int
 
@@ -22,8 +24,10 @@ type Client struct {
 	done     chan struct{}
 }
 
-func NewClient(host string, port int) *Client {
+func NewClient(name, host string, port int) *Client {
 	return &Client{
+		name: name,
+
 		host: host,
 		port: port,
 
@@ -66,7 +70,7 @@ func (c *Client) Run() error {
 
 	err = protocol.EncodeClientRequest(conn, &protocol.ConnectRequest{
 		Version: 1,
-		Name:    "me",
+		Name:    c.name,
 	})
 	if err != nil {
 		return fmt.Errorf("error initiating connection: %w", err)
