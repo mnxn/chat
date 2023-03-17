@@ -13,6 +13,7 @@ var (
 
 type ServerResponse interface {
 	ResponseType() ResponseType
+	Accept(ResponseVisitor)
 	encodeResponse(io.Writer) error
 	decodeResponse(io.Reader) error
 }

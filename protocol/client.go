@@ -10,6 +10,7 @@ var ErrInvalidRequestType = errors.New("invalid RequestType value")
 
 type ClientRequest interface {
 	RequestType() RequestType
+	Accept(RequestVisitor)
 	encodeRequest(io.Writer) error
 	decodeRequest(io.Reader) error
 }
