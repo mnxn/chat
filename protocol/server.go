@@ -18,7 +18,7 @@ type ServerResponse interface {
 }
 
 func EncodeServerResponse(w io.Writer, response ServerResponse) error {
-	err := encodeInt(w, response.ResponseType())
+	err := encodeResponseType(w, response.ResponseType())
 	if err != nil {
 		return fmt.Errorf("encode ServerResponse.Type: %w", err)
 	}
@@ -33,7 +33,7 @@ func EncodeServerResponse(w io.Writer, response ServerResponse) error {
 
 func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
 	var responseType ResponseType
-	err := decodeInt(r, &responseType)
+	err := decodeResponseType(r, &responseType)
 	if err != nil {
 		return nil, fmt.Errorf("decode ServerResponse.Type: %w", err)
 	}
@@ -52,8 +52,6 @@ func DecodeServerResponse(r io.Reader) (ServerResponse, error) {
 		response = new(RoomMessageResponse)
 	case UserMessage:
 		response = new(UserMessageResponse)
-	default:
-		return nil, fmt.Errorf("decode ServerResponse.Type(%d): %w", responseType, ErrInvalidResponseType)
 	}
 
 	err = response.decodeResponse(r)
@@ -95,6 +93,42 @@ func (r ResponseType) GoString() string {
 }
 
 func (r ResponseType) String() string { return r.GoString() }
+
+func encodeResponseType(w io.Writer, typ ResponseType) error {
+	switch typ {
+	case Error, FatalError,
+		RoomList, UserList,
+		RoomMessage, UserMessage:
+		break
+	default:
+		return fmt.Errorf("encode ResponseType(%d): %w", typ, ErrInvalidResponseType)
+	}
+
+	err := encodeInt(w, typ)
+	if err != nil {
+		return fmt.Errorf("encode ResponseType(%d): %w", typ, err)
+	}
+
+	return nil
+}
+
+func decodeResponseType(r io.Reader, typ *ResponseType) error {
+	err := decodeInt(r, typ)
+	if err != nil {
+		return fmt.Errorf("decode ResponseType: %w", err)
+	}
+
+	switch *typ {
+	case Error, FatalError,
+		RoomList, UserList,
+		RoomMessage, UserMessage:
+		break
+	default:
+		return fmt.Errorf("decode ResponseType(0x%08X): %w", uint32(*typ), ErrInvalidResponseType)
+	}
+
+	return nil
+}
 
 type ErrorType uint32
 
