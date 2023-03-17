@@ -16,3 +16,8 @@
 
 # Fuzzing testdata
 /protocol/testdata
+
+
+# Executables
+chat-client.exe
+chat-server.exe
