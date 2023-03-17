@@ -278,3 +278,26 @@ func TestDecodeServerResponse(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeServerResponseSequential(t *testing.T) {
+	t.Parallel()
+
+	var source bytes.Buffer
+	expected := make([]ServerResponse, len(serverResponseTests))
+	for i, test := range serverResponseTests {
+		source.Write(test.bytes)
+		expected[i] = test.ServerResponse
+	}
+
+	actual := make([]ServerResponse, 0, len(serverResponseTests))
+	response, err := DecodeServerResponse(&source)
+	for err == nil {
+		actual = append(actual, response)
+		response, err = DecodeServerResponse(&source)
+	}
+	if !generic.TestError(t, "sequential", len(actual), io.EOF, err) {
+		return
+	}
+
+	generic.TestEqual(t, "sequential", len(actual), expected, actual)
+}

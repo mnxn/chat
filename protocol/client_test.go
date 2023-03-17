@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	"github.com/mnxn/chat/generic"
@@ -164,4 +165,27 @@ func TestDecodeClientRequest(t *testing.T) {
 			generic.TestEqual(t, "decode", test.bytes, test.ClientRequest, actual)
 		})
 	}
+}
+
+func TestDecodeClientRequestSequential(t *testing.T) {
+	t.Parallel()
+
+	var source bytes.Buffer
+	expected := make([]ClientRequest, len(clientRequestTests))
+	for i, test := range clientRequestTests {
+		source.Write(test.bytes)
+		expected[i] = test.ClientRequest
+	}
+
+	actual := make([]ClientRequest, 0, len(clientRequestTests))
+	request, err := DecodeClientRequest(&source)
+	for err == nil {
+		actual = append(actual, request)
+		request, err = DecodeClientRequest(&source)
+	}
+	if !generic.TestError(t, "sequential", len(actual), io.EOF, err) {
+		return
+	}
+
+	generic.TestEqual(t, "sequential", len(actual), expected, actual)
 }
