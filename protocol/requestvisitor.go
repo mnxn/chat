@@ -1,6 +1,7 @@
 package protocol
 
 type RequestVisitor interface {
+	Keepalive(*KeepaliveRequest)
 	Connect(*ConnectRequest)
 	Disconnect(*DisconnectRequest)
 	ListRooms(*ListRoomsRequest)
@@ -11,6 +12,8 @@ type RequestVisitor interface {
 	JoinRoom(*JoinRoomRequest)
 	LeaveRoom(*LeaveRoomRequest)
 }
+
+func (k *KeepaliveRequest) Accept(v RequestVisitor) { v.Keepalive(k) }
 
 func (c *ConnectRequest) Accept(v RequestVisitor)    { v.Connect(c) }
 func (d *DisconnectRequest) Accept(v RequestVisitor) { v.Disconnect(d) }

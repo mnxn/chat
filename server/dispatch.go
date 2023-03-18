@@ -28,6 +28,8 @@ func (cu *connectedUser) sendFatalError(errorType protocol.ErrorType, info strin
 	}
 }
 
+func (cu *connectedUser) Keepalive(request *protocol.KeepaliveRequest) {}
+
 func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
 	if cu.connected() {
 		cu.outgoing <- &protocol.FatalErrorResponse{

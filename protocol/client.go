@@ -38,6 +38,8 @@ func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 
 	var request ClientRequest
 	switch requestType {
+	case Keepalive:
+		request = new(KeepaliveRequest)
 	case Connect:
 		request = new(ConnectRequest)
 	case Disconnect:
@@ -69,7 +71,8 @@ func DecodeClientRequest(r io.Reader) (ClientRequest, error) {
 type RequestType uint32
 
 const (
-	Connect RequestType = 1 + iota
+	Keepalive RequestType = iota
+	Connect
 	Disconnect
 	ListRooms
 	ListUsers
@@ -82,6 +85,8 @@ const (
 
 func (r RequestType) GoString() string {
 	switch r {
+	case Keepalive:
+		return "Keepalive"
 	case Connect:
 		return "Connect"
 	case Disconnect:
@@ -109,7 +114,8 @@ func (r RequestType) String() string { return r.GoString() }
 
 func encodeRequestType(w io.Writer, typ RequestType) error {
 	switch typ {
-	case Connect, Disconnect,
+	case Keepalive,
+		Connect, Disconnect,
 		ListRooms, ListUsers,
 		MessageRoom, MessageUser,
 		CreateRoom, JoinRoom, LeaveRoom:
@@ -133,7 +139,9 @@ func decodeRequestType(r io.Reader, typ *RequestType) error {
 	}
 
 	switch *typ {
-	case Connect, Disconnect,
+	case
+		Keepalive,
+		Connect, Disconnect,
 		ListRooms, ListUsers,
 		MessageRoom, MessageUser,
 		CreateRoom, JoinRoom, LeaveRoom:
@@ -144,6 +152,14 @@ func decodeRequestType(r io.Reader, typ *RequestType) error {
 
 	return nil
 }
+
+type KeepaliveRequest struct{}
+
+func (*KeepaliveRequest) RequestType() RequestType { return Keepalive }
+
+func (*KeepaliveRequest) encodeRequest(w io.Writer) error { return nil }
+
+func (*KeepaliveRequest) decodeRequest(r io.Reader) error { return nil }
 
 type ConnectRequest struct {
 	Version uint32
