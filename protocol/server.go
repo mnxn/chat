@@ -151,7 +151,7 @@ const (
 func (e ErrorType) GoString() string {
 	switch e {
 	case NotConnected:
-		return "Disconnection"
+		return "NotConnected"
 	case AlreadyConnected:
 		return "AlreadyConnected"
 	case InternalError:
