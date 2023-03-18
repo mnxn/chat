@@ -5,40 +5,33 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/mnxn/chat/client"
 )
 
 var (
-	host = flag.String("host", "localhost", "chat server hostname")
-	port = flag.Int("port", 5555, "chat server port number")
+	name      = flag.String("name", "", "display name")
+	host      = flag.String("host", "localhost", "chat server hostname")
+	port      = flag.Int("port", 5555, "chat server port number")
+	keepalive = flag.Int("keepalive", 15, "how often to send keepalive request to the server in seconds")
 )
 
 func main() {
-	flag.Usage = func() {
-		exe := filepath.Base(os.Args[0])
-		fmt.Fprintf(flag.CommandLine.Output(), "usage: %s [options] name\noptions:\n", exe)
-		flag.PrintDefaults()
-	}
 	flag.Parse()
 
 	fmt.Printf("connecting to %s:%d\n", *host, *port)
 
-	var name string
-	if len(os.Args) > 1 {
-		name = os.Args[1]
-	} else {
+	if *name == "" {
 		fmt.Print("   enter display name: ")
 		scanner := bufio.NewScanner(os.Stdin)
 		if !scanner.Scan() {
 			fmt.Fprintln(os.Stderr, "error reading name.")
 			return
 		}
-		name = scanner.Text()
+		*name = scanner.Text()
 	}
 
-	c := client.NewClient(name, *host, *port)
+	c := client.NewClient(*name, *host, *port, *keepalive)
 	err := c.Run()
 	if err != nil {
 		fmt.Printf("client error: %s", err.Error())

@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/mnxn/chat/protocol"
 )
@@ -24,10 +25,11 @@ type Client struct {
 	incoming chan protocol.ServerResponse
 	outgoing chan protocol.ClientRequest
 
-	conn net.Conn
+	ticker *time.Ticker
+	conn   net.Conn
 }
 
-func NewClient(name, host string, port int) *Client {
+func NewClient(name, host string, port int, keepalive int) *Client {
 	client := &Client{
 		name: name,
 		host: host,
@@ -40,7 +42,8 @@ func NewClient(name, host string, port int) *Client {
 		incoming: make(chan protocol.ServerResponse),
 		outgoing: make(chan protocol.ClientRequest),
 
-		conn: nil,
+		ticker: time.NewTicker(time.Duration(keepalive) * time.Second),
+		conn:   nil,
 	}
 	current := "general"
 	client.atomicCurrent.Store(&current)
@@ -94,6 +97,12 @@ func (c *Client) Run() error {
 
 		case output := <-c.output:
 			fmt.Print(output)
+
+		case <-c.ticker.C:
+			err = protocol.EncodeClientRequest(c.conn, &protocol.KeepaliveRequest{})
+			if err != nil {
+				return fmt.Errorf("error sending request: %w", err)
+			}
 
 		case request := <-c.outgoing:
 			err = protocol.EncodeClientRequest(c.conn, request)
