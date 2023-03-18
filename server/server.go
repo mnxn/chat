@@ -160,10 +160,12 @@ func (s *Server) handle(conn net.Conn) {
 
 func (s *Server) removeRoomUser(roomName string, room *room, user *user) {
 	room.usersMutex.Lock()
-	delete(room.users, user.name())
-	if room != s.general && len(room.users) == 0 {
+	_, inRoom := room.users[user.name()]
+	if inRoom && len(room.users) == 1 && room != s.general {
 		delete(s.rooms, roomName)
 		s.logger.Printf("removed room: %s\n", roomName)
+	} else {
+		delete(room.users, user.name())
 	}
 	room.usersMutex.Unlock()
 }
