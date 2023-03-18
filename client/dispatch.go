@@ -50,9 +50,9 @@ func (c *Client) UserList(response *protocol.UserListResponse) {
 }
 
 func (c *Client) RoomMessage(response *protocol.RoomMessageResponse) {
-	c.output <- fmt.Sprintf("%s in %s> %s", response.Sender, response.Room, response.Text)
+	c.output <- fmt.Sprintf("<%s@%s> %s", response.Sender, response.Room, response.Text)
 }
 
 func (c *Client) UserMessage(response *protocol.UserMessageResponse) {
-	c.output <- fmt.Sprintf("%s to you> %s", response.Sender, response.Text)
+	c.output <- fmt.Sprintf("(%s) %s", response.Sender, response.Text)
 }

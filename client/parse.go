@@ -8,8 +8,12 @@ import (
 
 func (c *Client) parse(input string) {
 	if !strings.HasPrefix(input, "/") {
+		c.currentMutex.RLock()
+		current := c.current
+		c.currentMutex.RUnlock()
+
 		c.outgoing <- &protocol.MessageRoomRequest{
-			Room: "",
+			Room: current,
 			Text: input,
 		}
 		return

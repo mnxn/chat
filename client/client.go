@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 
 	"github.com/mnxn/chat/protocol"
 )
@@ -15,6 +16,9 @@ type Client struct {
 
 	host string
 	port int
+
+	current      string
+	currentMutex sync.RWMutex
 
 	input    chan string
 	output   chan string
@@ -26,9 +30,11 @@ type Client struct {
 func NewClient(name, host string, port int) *Client {
 	return &Client{
 		name: name,
-
 		host: host,
 		port: port,
+
+		current:      "general",
+		currentMutex: sync.RWMutex{},
 
 		input:    make(chan string),
 		output:   make(chan string),
@@ -47,7 +53,7 @@ func (c *Client) Run() error {
 
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Print("you> ")
+		c.prompt()
 		for scanner.Scan() {
 			c.input <- scanner.Text()
 		}
@@ -88,15 +94,21 @@ func (c *Client) Run() error {
 
 		case input := <-c.input:
 			go c.parse(input)
-			fmt.Print("you> ")
+			c.prompt()
 
 		case output := <-c.output:
 			fmt.Println()
 			fmt.Println(output)
-			fmt.Print("you> ")
+			c.prompt()
 
 		case <-c.done:
 			return nil
 		}
 	}
+}
+
+func (c *Client) prompt() {
+	c.currentMutex.RLock()
+	fmt.Printf("<%s@%s> ", c.name, c.current)
+	c.currentMutex.RUnlock()
 }

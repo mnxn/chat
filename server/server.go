@@ -26,6 +26,8 @@ type Server struct {
 	host string
 	port int
 
+	general *room
+
 	rooms      map[string]*room
 	roomsMutex sync.RWMutex
 
@@ -38,11 +40,18 @@ type connectedUser struct {
 }
 
 func NewServer(host string, port int) *Server {
+	general := &room{
+		users:      make(map[string]*user),
+		usersMutex: sync.RWMutex{},
+	}
+
 	return &Server{
 		host: host,
 		port: port,
 
-		rooms:      make(map[string]*room),
+		general: general,
+
+		rooms:      map[string]*room{"general": general},
 		roomsMutex: sync.RWMutex{},
 
 		room: room{
@@ -121,6 +130,10 @@ func (s *Server) handle(conn net.Conn) {
 	s.usersMutex.Lock()
 	s.users[cu.name] = cu.user
 	s.usersMutex.Unlock()
+
+	cu.server.general.usersMutex.Lock()
+	cu.server.general.users[cu.name] = cu.user
+	cu.server.general.usersMutex.Unlock()
 
 	go func() {
 		for {
