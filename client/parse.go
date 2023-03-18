@@ -8,17 +8,17 @@ import (
 )
 
 const helpMessage = `   command help:
-      /help             show this message
+      /help              show this message
       /switch [room]    switch current room
-      /rooms            list rooms in the server
-      /users            list users in the server
-      /users  [room]    list users in a room
-      /msg    [room]    send a message to a specific room
-      /dm     [user]    send a direct message to a user
-      /create [room]    create a room
-      /join   [room]    join a room
-      /leave  [room]    leave a room
-      /quit             quit the chat program
+      /rooms             list rooms in the server
+      /users             list users in the server
+      /users  [room]     list users in a room
+      /msg    [rooms]    send a message to specific rooms
+      /dm     [users]    send a direct message to specific users
+      /create [rooms]    create rooms
+      /join   [rooms]    join rooms
+      /leave  [rooms]    leave rooms
+      /quit              quit the chat program
 `
 
 func (c *Client) parse(input string) {
@@ -65,23 +65,27 @@ func (c *Client) parse(input string) {
 		}
 
 	case "msg":
-		if len(split) < 2 {
+		if len(split) <= 2 {
 			c.output <- "[command error] missing command arguments: use /help to see usage\n"
 			return
 		}
-		c.outgoing <- &protocol.MessageRoomRequest{
-			Room: split[1],
-			Text: split[2],
+		for _, room := range strings.Split(split[1], ",") {
+			c.outgoing <- &protocol.MessageRoomRequest{
+				Room: room,
+				Text: split[2],
+			}
 		}
 
 	case "dm":
-		if len(split) < 2 {
+		if len(split) <= 2 {
 			c.output <- "[command error] missing command arguments: use /help to see usage\n"
 			return
 		}
-		c.outgoing <- &protocol.MessageUserRequest{
-			User: split[1],
-			Text: split[2],
+		for _, user := range strings.Split(split[1], ",") {
+			c.outgoing <- &protocol.MessageUserRequest{
+				User: user,
+				Text: split[2],
+			}
 		}
 
 	case "create":
@@ -89,8 +93,10 @@ func (c *Client) parse(input string) {
 			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
-		c.outgoing <- &protocol.CreateRoomRequest{
-			Room: split[1],
+		for _, room := range strings.Split(split[1], ",") {
+			c.outgoing <- &protocol.CreateRoomRequest{
+				Room: room,
+			}
 		}
 
 	case "join":
@@ -98,18 +104,23 @@ func (c *Client) parse(input string) {
 			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
-		c.outgoing <- &protocol.JoinRoomRequest{
-			Room: split[1],
+		var room string
+		for _, room = range strings.Split(split[1], ",") {
+			c.outgoing <- &protocol.JoinRoomRequest{
+				Room: room,
+			}
 		}
-		c.atomicCurrent.Store(&split[1])
+		c.atomicCurrent.Store(&room)
 
 	case "leave":
 		if len(split) < 2 {
 			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
-		c.outgoing <- &protocol.LeaveRoomRequest{
-			Room: split[1],
+		for _, room := range strings.Split(split[1], ",") {
+			c.outgoing <- &protocol.LeaveRoomRequest{
+				Room: room,
+			}
 		}
 
 	case "quit":
