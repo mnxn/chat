@@ -167,7 +167,7 @@ func (e ErrorType) GoString() string {
 	case ExistingRoom:
 		return "ExistingRoom"
 	case ExistingUser:
-		return "ExistingRoom"
+		return "ExistingUser"
 	case InvalidRoom:
 		return "InvalidRoom"
 	case InvalidUser:
