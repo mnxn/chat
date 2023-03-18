@@ -127,7 +127,19 @@ func (s *Server) handle(conn net.Conn) {
 		},
 		server: s,
 	}
+
 	s.usersMutex.Lock()
+	if _, ok := s.users[cu.name]; ok {
+		err := protocol.EncodeServerResponse(conn, &protocol.FatalErrorResponse{
+			Error: protocol.ExistingUser,
+			Info:  "username already exists",
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error encoding response: %v", err)
+		}
+		s.usersMutex.Unlock()
+		return
+	}
 	s.users[cu.name] = cu.user
 	s.usersMutex.Unlock()
 
