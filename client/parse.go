@@ -7,6 +7,8 @@ import (
 )
 
 func (c *Client) parse(input string) {
+	defer c.prompt()
+
 	if !strings.HasPrefix(input, "/") {
 		c.currentMutex.RLock()
 		current := c.current
@@ -30,17 +32,27 @@ func (c *Client) parse(input string) {
 		c.output <- "[command error] invalid command: use /help to see all commands"
 
 	case "help":
-		c.output <- `command help:
-    /help             show this message
-    /rooms            list rooms in the server
-    /users            list users in the server
-    /users  [room]    list users in a room
-    /msg    [room]    send a message to a specific room
-    /dm     [user]    send a direct message to a user
-    /create [room]    create a room
-    /join   [room]    join a room
-    /leave  [room]    leave a room
-    /quit             quit the chat program`
+		c.output <- `  command help:
+        /help             show this message
+        /switch [room]    switch current room
+        /rooms            list rooms in the server
+        /users            list users in the server
+        /users  [room]    list users in a room
+        /msg    [room]    send a message to a specific room
+        /dm     [user]    send a direct message to a user
+        /create [room]    create a room
+        /join   [room]    join a room
+        /leave  [room]    leave a room
+        /quit             quit the chat program`
+
+	case "switch":
+		if len(split) < 2 {
+			c.output <- "[command error] missing command argument: use /help to see usage"
+			return
+		}
+		c.currentMutex.Lock()
+		c.current = split[1]
+		c.currentMutex.Unlock()
 
 	case "rooms":
 		c.outgoing <- &protocol.ListRoomsRequest{}
@@ -91,6 +103,9 @@ func (c *Client) parse(input string) {
 		c.outgoing <- &protocol.JoinRoomRequest{
 			Room: split[1],
 		}
+		c.currentMutex.Lock()
+		c.current = split[1]
+		c.currentMutex.Unlock()
 
 	case "leave":
 		if len(split) < 2 {

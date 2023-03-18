@@ -94,7 +94,6 @@ func (c *Client) Run() error {
 
 		case input := <-c.input:
 			go c.parse(input)
-			c.prompt()
 
 		case output := <-c.output:
 			fmt.Println()
