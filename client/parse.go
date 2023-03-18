@@ -130,6 +130,6 @@ func (c *Client) parse(input string) {
 
 	case "quit":
 		c.outgoing <- &protocol.DisconnectRequest{}
-		c.conn.SetReadDeadline(time.Now())
+		_ = c.conn.SetReadDeadline(time.Now())
 	}
 }

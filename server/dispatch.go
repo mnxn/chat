@@ -71,7 +71,7 @@ func (cu *connectedUser) Disconnect(request *protocol.DisconnectRequest) {
 		return
 	}
 
-	cu.conn.SetReadDeadline(time.Now())
+	_ = cu.conn.SetReadDeadline(time.Now())
 }
 
 func (cu *connectedUser) ListRooms(request *protocol.ListRoomsRequest) {

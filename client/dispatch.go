@@ -22,7 +22,7 @@ func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 	} else {
 		c.output <- fmt.Sprintf("[fatal error] %s\n", response.Error)
 	}
-	c.conn.SetReadDeadline(time.Now())
+	_ = c.conn.SetReadDeadline(time.Now())
 }
 
 func (c *Client) RoomList(response *protocol.RoomListResponse) {
