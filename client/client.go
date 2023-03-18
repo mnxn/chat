@@ -85,7 +85,7 @@ func (c *Client) Run() error {
 			}
 
 		case response := <-c.incoming:
-			go c.dispatch(response)
+			go response.Accept(c)
 
 		case input := <-c.input:
 			go c.parse(input)
@@ -196,53 +196,5 @@ func (c *Client) parse(input string) {
 	case "quit":
 		c.outgoing <- &protocol.DisconnectRequest{}
 		c.done <- struct{}{}
-	}
-}
-
-func (c *Client) dispatch(response protocol.ServerResponse) {
-	switch response := response.(type) {
-	case *protocol.ErrorResponse:
-		if len(response.Info) > 0 {
-			c.output <- fmt.Sprintf("[server error] %s: %s", response.Error, response.Info)
-		} else {
-			c.output <- fmt.Sprintf("[server error] %s", response.Error)
-		}
-
-	case *protocol.FatalErrorResponse:
-		if len(response.Info) > 0 {
-			c.output <- fmt.Sprintf("[fatal error] %s: %s", response.Error, response.Info)
-		} else {
-			c.output <- fmt.Sprintf("[fatal error] %s", response.Error)
-		}
-
-	case *protocol.RoomListResponse:
-		var sb strings.Builder
-		sb.WriteString("Room Listing:\n")
-		for _, room := range response.Rooms {
-			sb.WriteRune('\t')
-			sb.WriteString(room)
-			sb.WriteRune('\n')
-		}
-		c.output <- sb.String()
-
-	case *protocol.UserListResponse:
-		var sb strings.Builder
-		if len(response.Room) > 0 {
-			sb.WriteString(fmt.Sprintf("User Listing in Room %s:\n", response.Room))
-		} else {
-			sb.WriteString("User Listing in Server:\n")
-		}
-		for _, room := range response.Users {
-			sb.WriteRune('\t')
-			sb.WriteString(room)
-			sb.WriteRune('\n')
-		}
-		c.output <- sb.String()
-
-	case *protocol.RoomMessageResponse:
-		c.output <- fmt.Sprintf("%s in %s> %s", response.Sender, response.Room, response.Text)
-
-	case *protocol.UserMessageResponse:
-		c.output <- fmt.Sprintf("%s to you> %s", response.Sender, response.Text)
 	}
 }
