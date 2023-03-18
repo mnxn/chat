@@ -173,6 +173,11 @@ func (s *Server) handle(conn net.Conn) {
 			s.usersMutex.Lock()
 			delete(s.users, cu.name)
 			s.usersMutex.Unlock()
+			for _, room := range s.rooms {
+				room.usersMutex.Lock()
+				delete(s.users, cu.name)
+				room.usersMutex.Unlock()
+			}
 			fmt.Fprintf(os.Stderr, "user removed: %s\n", connect.Name)
 			return
 		}
