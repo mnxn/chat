@@ -10,10 +10,7 @@ import (
 	"github.com/mnxn/chat/server"
 )
 
-var (
-	host = flag.String("host", "localhost", "chat server hostname")
-	port = flag.Int("port", 5555, "chat server port number")
-)
+var port = flag.Int("port", 5555, "chat server port number")
 
 func main() {
 	flag.Usage = func() {
@@ -24,9 +21,9 @@ func main() {
 	flag.Parse()
 
 	logger := log.Default()
-	logger.Printf("serving on %s:%d\n", *host, *port)
+	logger.Printf("serving on port %d\n", *port)
 
-	s := server.NewServer(*host, *port, logger)
+	s := server.NewServer(*port, logger)
 	err := s.Run()
 	if err != nil {
 		logger.Fatalf("server error: %s\n", err.Error())

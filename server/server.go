@@ -13,7 +13,6 @@ import (
 )
 
 type Server struct {
-	host string
 	port int
 
 	general *room
@@ -51,14 +50,13 @@ type connectedUser struct {
 	conn   net.Conn
 }
 
-func NewServer(host string, port int, logger *log.Logger) *Server {
+func NewServer(port int, logger *log.Logger) *Server {
 	general := &room{
 		users:      make(map[string]*user),
 		usersMutex: sync.RWMutex{},
 	}
 
 	return &Server{
-		host: host,
 		port: port,
 
 		general: general,
@@ -76,7 +74,7 @@ func NewServer(host string, port int, logger *log.Logger) *Server {
 }
 
 func (s *Server) Run() error {
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.host, s.port))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
 	if err != nil {
 		return fmt.Errorf("error starting tcp server: %w", err)
 	}
