@@ -257,12 +257,7 @@ func (cu *connectedUser) LeaveRoom(request *protocol.LeaveRoomRequest) {
 		return
 	}
 
-	room.usersMutex.Lock()
-	delete(room.users, cu.name())
-	if len(room.users) == 0 {
-		delete(cu.server.rooms, request.Room)
-	}
-	room.usersMutex.Unlock()
+	cu.server.removeRoomUser(request.Room, room, cu.user)
 
 	cu.server.roomsMutex.Unlock()
 }

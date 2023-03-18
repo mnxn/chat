@@ -117,10 +117,8 @@ func (s *Server) handle(conn net.Conn) {
 		s.usersMutex.Unlock()
 
 		s.roomsMutex.RLock()
-		for _, room := range s.rooms {
-			room.usersMutex.Lock()
-			delete(s.users, cu.name())
-			room.usersMutex.Unlock()
+		for roomName, room := range s.rooms {
+			s.removeRoomUser(roomName, room, cu.user)
 		}
 		s.roomsMutex.RUnlock()
 
@@ -158,4 +156,14 @@ func (s *Server) handle(conn net.Conn) {
 			return
 		}
 	}
+}
+
+func (s *Server) removeRoomUser(roomName string, room *room, user *user) {
+	room.usersMutex.Lock()
+	delete(room.users, user.name())
+	if room != s.general && len(room.users) == 0 {
+		delete(s.rooms, roomName)
+		s.logger.Printf("removed room: %s\n", roomName)
+	}
+	room.usersMutex.Unlock()
 }
