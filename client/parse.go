@@ -23,9 +23,7 @@ const helpMessage = `   command help:
 
 func (c *Client) parse(input string) {
 	if !strings.HasPrefix(input, "/") {
-		c.currentMutex.RLock()
-		current := c.current
-		c.currentMutex.RUnlock()
+		current := *c.atomicCurrent.Load()
 
 		c.outgoing <- &protocol.MessageRoomRequest{
 			Room: current,
@@ -52,9 +50,7 @@ func (c *Client) parse(input string) {
 			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
-		c.currentMutex.Lock()
-		c.current = split[1]
-		c.currentMutex.Unlock()
+		c.atomicCurrent.Store(&split[1])
 
 	case "rooms":
 		c.outgoing <- &protocol.ListRoomsRequest{}
@@ -105,9 +101,7 @@ func (c *Client) parse(input string) {
 		c.outgoing <- &protocol.JoinRoomRequest{
 			Room: split[1],
 		}
-		c.currentMutex.Lock()
-		c.current = split[1]
-		c.currentMutex.Unlock()
+		c.atomicCurrent.Store(&split[1])
 
 	case "leave":
 		if len(split) < 2 {

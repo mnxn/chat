@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"sync"
+	"sync/atomic"
 
 	"github.com/mnxn/chat/protocol"
 )
@@ -17,8 +17,7 @@ type Client struct {
 	host string
 	port int
 
-	current      string
-	currentMutex sync.RWMutex
+	atomicCurrent atomic.Pointer[string]
 
 	input    chan string
 	output   chan string
@@ -29,13 +28,12 @@ type Client struct {
 }
 
 func NewClient(name, host string, port int) *Client {
-	return &Client{
+	client := &Client{
 		name: name,
 		host: host,
 		port: port,
 
-		current:      "general",
-		currentMutex: sync.RWMutex{},
+		atomicCurrent: atomic.Pointer[string]{},
 
 		input:    make(chan string),
 		output:   make(chan string),
@@ -44,6 +42,9 @@ func NewClient(name, host string, port int) *Client {
 
 		conn: nil,
 	}
+	current := "general"
+	client.atomicCurrent.Store(&current)
+	return client
 }
 
 func (c *Client) Run() error {
