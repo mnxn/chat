@@ -51,9 +51,11 @@ func (c *Client) Run() error {
 	}
 	defer conn.Close()
 
+	fmt.Println("connected.")
+	fmt.Println()
+
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
-		c.output <- ""
 		for scanner.Scan() {
 			c.input <- scanner.Text()
 		}
@@ -97,17 +99,9 @@ func (c *Client) Run() error {
 
 		case output := <-c.output:
 			fmt.Print(output)
-			fmt.Print(c.prompt())
 
 		case <-c.done:
 			return nil
 		}
 	}
-}
-
-func (c *Client) prompt() string {
-	c.currentMutex.RLock()
-	s := fmt.Sprintf("<%s@%s> ", c.name, c.current)
-	c.currentMutex.RUnlock()
-	return s
 }

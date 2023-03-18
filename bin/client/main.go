@@ -29,7 +29,7 @@ func main() {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	} else {
-		fmt.Print("enter display name: ")
+		fmt.Print("   enter display name: ")
 		scanner := bufio.NewScanner(os.Stdin)
 		if !scanner.Scan() {
 			fmt.Fprintln(os.Stderr, "error reading name.")
