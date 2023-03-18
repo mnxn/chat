@@ -9,17 +9,17 @@ import (
 
 func (c *Client) Error(response *protocol.ErrorResponse) {
 	if len(response.Info) > 0 {
-		c.output <- fmt.Sprintf("[server error] %s: %s", response.Error, response.Info)
+		c.output <- fmt.Sprintf("[server error] %s: %s\n", response.Error, response.Info)
 	} else {
-		c.output <- fmt.Sprintf("[server error] %s", response.Error)
+		c.output <- fmt.Sprintf("[server error] %s\n", response.Error)
 	}
 }
 
 func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 	if len(response.Info) > 0 {
-		c.output <- fmt.Sprintf("[fatal error] %s: %s", response.Error, response.Info)
+		c.output <- fmt.Sprintf("[fatal error] %s: %s\n", response.Error, response.Info)
 	} else {
-		c.output <- fmt.Sprintf("[fatal error] %s", response.Error)
+		c.output <- fmt.Sprintf("[fatal error] %s\n", response.Error)
 	}
 }
 
@@ -50,9 +50,9 @@ func (c *Client) UserList(response *protocol.UserListResponse) {
 }
 
 func (c *Client) RoomMessage(response *protocol.RoomMessageResponse) {
-	c.output <- fmt.Sprintf("<%s@%s> %s", response.Sender, response.Room, response.Text)
+	c.output <- fmt.Sprintf("<%s@%s> %s\n", response.Sender, response.Room, response.Text)
 }
 
 func (c *Client) UserMessage(response *protocol.UserMessageResponse) {
-	c.output <- fmt.Sprintf("(%s) %s", response.Sender, response.Text)
+	c.output <- fmt.Sprintf("(%s) %s\n", response.Sender, response.Text)
 }

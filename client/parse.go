@@ -20,8 +20,6 @@ const helpMessage = `    command help:
         /quit             quit the chat program`
 
 func (c *Client) parse(input string) {
-	defer c.prompt()
-
 	if !strings.HasPrefix(input, "/") {
 		c.currentMutex.RLock()
 		current := c.current
