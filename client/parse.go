@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,7 +10,8 @@ import (
 
 const helpMessage = `   command help:
       /help              show this message
-      /switch [room]    switch current room
+      /current           show current room
+      /switch [room]     switch current room
       /rooms             list rooms in the server
       /users             list users in the server
       /users  [room]     list users in a room
@@ -44,6 +46,9 @@ func (c *Client) parse(input string) {
 
 	case "help":
 		c.output <- helpMessage
+
+	case "current":
+		c.output <- fmt.Sprintf("   Current room: %s\n", *c.atomicCurrent.Load())
 
 	case "switch":
 		if len(split) < 2 {
