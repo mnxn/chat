@@ -6,18 +6,19 @@ import (
 	"github.com/mnxn/chat/protocol"
 )
 
-const helpMessage = `    command help:
-        /help             show this message
-        /switch [room]    switch current room
-        /rooms            list rooms in the server
-        /users            list users in the server
-        /users  [room]    list users in a room
-        /msg    [room]    send a message to a specific room
-        /dm     [user]    send a direct message to a user
-        /create [room]    create a room
-        /join   [room]    join a room
-        /leave  [room]    leave a room
-        /quit             quit the chat program`
+const helpMessage = `   command help:
+      /help             show this message
+      /switch [room]    switch current room
+      /rooms            list rooms in the server
+      /users            list users in the server
+      /users  [room]    list users in a room
+      /msg    [room]    send a message to a specific room
+      /dm     [user]    send a direct message to a user
+      /create [room]    create a room
+      /join   [room]    join a room
+      /leave  [room]    leave a room
+      /quit             quit the chat program
+`
 
 func (c *Client) parse(input string) {
 	if !strings.HasPrefix(input, "/") {
@@ -34,20 +35,20 @@ func (c *Client) parse(input string) {
 
 	split := strings.SplitN(input[1:], " ", 3)
 	if len(split) < 1 {
-		c.output <- "[command error] invalid command: use /help to see all commands"
+		c.output <- "[command error] invalid command: use /help to see all commands\n"
 		return
 	}
 
 	switch split[0] {
 	default:
-		c.output <- "[command error] invalid command: use /help to see all commands"
+		c.output <- "[command error] invalid command: use /help to see all commands\n"
 
 	case "help":
 		c.output <- helpMessage
 
 	case "switch":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command argument: use /help to see usage"
+			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
 		c.currentMutex.Lock()
@@ -68,7 +69,7 @@ func (c *Client) parse(input string) {
 
 	case "msg":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command arguments: use /help to see usage"
+			c.output <- "[command error] missing command arguments: use /help to see usage\n"
 			return
 		}
 		c.outgoing <- &protocol.MessageRoomRequest{
@@ -78,7 +79,7 @@ func (c *Client) parse(input string) {
 
 	case "dm":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command arguments: use /help to see usage"
+			c.output <- "[command error] missing command arguments: use /help to see usage\n"
 			return
 		}
 		c.outgoing <- &protocol.MessageUserRequest{
@@ -88,7 +89,7 @@ func (c *Client) parse(input string) {
 
 	case "create":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command argument: use /help to see usage"
+			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
 		c.outgoing <- &protocol.CreateRoomRequest{
@@ -97,7 +98,7 @@ func (c *Client) parse(input string) {
 
 	case "join":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command argument: use /help to see usage"
+			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
 		c.outgoing <- &protocol.JoinRoomRequest{
@@ -109,7 +110,7 @@ func (c *Client) parse(input string) {
 
 	case "leave":
 		if len(split) < 2 {
-			c.output <- "[command error] missing command argument: use /help to see usage"
+			c.output <- "[command error] missing command argument: use /help to see usage\n"
 			return
 		}
 		c.outgoing <- &protocol.LeaveRoomRequest{

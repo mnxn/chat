@@ -25,9 +25,9 @@ func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 
 func (c *Client) RoomList(response *protocol.RoomListResponse) {
 	var sb strings.Builder
-	sb.WriteString("Room Listing:\n")
+	sb.WriteString("   Room Listing:\n")
 	for _, room := range response.Rooms {
-		sb.WriteRune('\t')
+		sb.WriteString("      ")
 		sb.WriteString(room)
 		sb.WriteRune('\n')
 	}
@@ -37,12 +37,12 @@ func (c *Client) RoomList(response *protocol.RoomListResponse) {
 func (c *Client) UserList(response *protocol.UserListResponse) {
 	var sb strings.Builder
 	if len(response.Room) > 0 {
-		sb.WriteString(fmt.Sprintf("User Listing in Room %s:\n", response.Room))
+		sb.WriteString(fmt.Sprintf("   User Listing in Room %s:\n", response.Room))
 	} else {
-		sb.WriteString("User Listing in Server:\n")
+		sb.WriteString("   User Listing in Server:\n")
 	}
 	for _, room := range response.Users {
-		sb.WriteRune('\t')
+		sb.WriteString("      ")
 		sb.WriteString(room)
 		sb.WriteRune('\n')
 	}
