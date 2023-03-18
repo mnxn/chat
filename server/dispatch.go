@@ -82,10 +82,12 @@ func (cu connectedUser) MessageRoom(request *protocol.MessageRoomRequest) {
 
 	room.usersMutex.RLock()
 	for _, user := range room.users {
-		user.outgoing <- &protocol.RoomMessageResponse{
-			Room:   request.Room,
-			Sender: cu.name,
-			Text:   request.Text,
+		if user.name != cu.name {
+			user.outgoing <- &protocol.RoomMessageResponse{
+				Room:   request.Room,
+				Sender: cu.name,
+				Text:   request.Text,
+			}
 		}
 	}
 	room.usersMutex.RUnlock()
