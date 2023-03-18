@@ -32,8 +32,9 @@ func main() {
 	}
 
 	c := client.NewClient(*name, *host, *port, *keepalive)
-	err := c.Run()
-	if err != nil {
-		fmt.Printf("client error: %s", err.Error())
+	if err := c.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "remote server disconnected.")
+	} else {
+		fmt.Println("connection ended.")
 	}
 }
