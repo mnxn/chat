@@ -1,19 +1,19 @@
 package protocol
 
 type ResponseVisitor interface {
-	VisitError(*ErrorResponse)
-	VisitFatalError(*FatalErrorResponse)
-	VisitRoomList(*RoomListResponse)
-	VisitUserList(*UserListResponse)
-	VisitRoomMessage(*RoomMessageResponse)
-	VisitUserMessage(*UserMessageResponse)
+	Error(*ErrorResponse)
+	FatalError(*FatalErrorResponse)
+	RoomList(*RoomListResponse)
+	UserList(*UserListResponse)
+	RoomMessage(*RoomMessageResponse)
+	UserMessage(*UserMessageResponse)
 }
 
-func (e *ErrorResponse) Accept(v ResponseVisitor)       { v.VisitError(e) }
-func (fe *FatalErrorResponse) Accept(v ResponseVisitor) { v.VisitFatalError(fe) }
+func (e *ErrorResponse) Accept(v ResponseVisitor)       { v.Error(e) }
+func (fe *FatalErrorResponse) Accept(v ResponseVisitor) { v.FatalError(fe) }
 
-func (rl *RoomListResponse) Accept(v ResponseVisitor) { v.VisitRoomList(rl) }
-func (ul *UserListResponse) Accept(v ResponseVisitor) { v.VisitUserList(ul) }
+func (rl *RoomListResponse) Accept(v ResponseVisitor) { v.RoomList(rl) }
+func (ul *UserListResponse) Accept(v ResponseVisitor) { v.UserList(ul) }
 
-func (rm *RoomMessageResponse) Accept(v ResponseVisitor) { v.VisitRoomMessage(rm) }
-func (um *UserMessageResponse) Accept(v ResponseVisitor) { v.VisitUserMessage(um) }
+func (rm *RoomMessageResponse) Accept(v ResponseVisitor) { v.RoomMessage(rm) }
+func (um *UserMessageResponse) Accept(v ResponseVisitor) { v.UserMessage(um) }

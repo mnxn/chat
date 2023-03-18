@@ -7,18 +7,18 @@ import (
 	"github.com/mnxn/chat/protocol"
 )
 
-func (cu connectedUser) VisitConnect(request *protocol.ConnectRequest) {
+func (cu connectedUser) Connect(request *protocol.ConnectRequest) {
 	cu.outgoing <- &protocol.FatalErrorResponse{
 		Error: protocol.AlreadyConnected,
 		Info:  "",
 	}
 }
 
-func (cu connectedUser) VisitDisconnect(request *protocol.DisconnectRequest) {
+func (cu connectedUser) Disconnect(request *protocol.DisconnectRequest) {
 	cu.done <- struct{}{}
 }
 
-func (cu connectedUser) VisitListRooms(request *protocol.ListRoomsRequest) {
+func (cu connectedUser) ListRooms(request *protocol.ListRoomsRequest) {
 	cu.server.roomsMutex.RLock()
 	rooms := make([]string, 0, len(cu.server.rooms))
 	for room := range cu.server.rooms {
@@ -32,7 +32,7 @@ func (cu connectedUser) VisitListRooms(request *protocol.ListRoomsRequest) {
 	}
 }
 
-func (cu connectedUser) VisitListUsers(request *protocol.ListUsersRequest) {
+func (cu connectedUser) ListUsers(request *protocol.ListUsersRequest) {
 	var users []string
 	if request.Room != "" {
 		cu.server.roomsMutex.RLock()
@@ -68,7 +68,7 @@ func (cu connectedUser) VisitListUsers(request *protocol.ListUsersRequest) {
 	}
 }
 
-func (cu connectedUser) VisitMessageRoom(request *protocol.MessageRoomRequest) {
+func (cu connectedUser) MessageRoom(request *protocol.MessageRoomRequest) {
 	cu.server.roomsMutex.RLock()
 	room, ok := cu.server.rooms[request.Room]
 	cu.server.roomsMutex.RUnlock()
@@ -91,7 +91,7 @@ func (cu connectedUser) VisitMessageRoom(request *protocol.MessageRoomRequest) {
 	room.usersMutex.RUnlock()
 }
 
-func (cu connectedUser) VisitMessageUser(request *protocol.MessageUserRequest) {
+func (cu connectedUser) MessageUser(request *protocol.MessageUserRequest) {
 	cu.server.usersMutex.RLock()
 	user, ok := cu.server.users[request.User]
 	cu.server.usersMutex.RUnlock()
@@ -109,7 +109,7 @@ func (cu connectedUser) VisitMessageUser(request *protocol.MessageUserRequest) {
 	}
 }
 
-func (cu connectedUser) VisitCreateRoom(request *protocol.CreateRoomRequest) {
+func (cu connectedUser) CreateRoom(request *protocol.CreateRoomRequest) {
 	if strings.ContainsRune(request.Room, ' ') {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.InvalidRoom,
@@ -134,7 +134,7 @@ func (cu connectedUser) VisitCreateRoom(request *protocol.CreateRoomRequest) {
 	cu.server.roomsMutex.Unlock()
 }
 
-func (cu connectedUser) VisitJoinRoom(request *protocol.JoinRoomRequest) {
+func (cu connectedUser) JoinRoom(request *protocol.JoinRoomRequest) {
 	cu.server.roomsMutex.RLock()
 	room, ok := cu.server.rooms[request.Room]
 	cu.server.roomsMutex.RUnlock()
@@ -151,7 +151,7 @@ func (cu connectedUser) VisitJoinRoom(request *protocol.JoinRoomRequest) {
 	room.usersMutex.Unlock()
 }
 
-func (cu connectedUser) VisitLeaveRoom(request *protocol.LeaveRoomRequest) {
+func (cu connectedUser) LeaveRoom(request *protocol.LeaveRoomRequest) {
 	cu.server.roomsMutex.Lock()
 	room, ok := cu.server.rooms[request.Room]
 

@@ -7,7 +7,7 @@ import (
 	"github.com/mnxn/chat/protocol"
 )
 
-func (c *Client) VisitError(response *protocol.ErrorResponse) {
+func (c *Client) Error(response *protocol.ErrorResponse) {
 	if len(response.Info) > 0 {
 		c.output <- fmt.Sprintf("[server error] %s: %s", response.Error, response.Info)
 	} else {
@@ -15,7 +15,7 @@ func (c *Client) VisitError(response *protocol.ErrorResponse) {
 	}
 }
 
-func (c *Client) VisitFatalError(response *protocol.FatalErrorResponse) {
+func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 	if len(response.Info) > 0 {
 		c.output <- fmt.Sprintf("[fatal error] %s: %s", response.Error, response.Info)
 	} else {
@@ -23,7 +23,7 @@ func (c *Client) VisitFatalError(response *protocol.FatalErrorResponse) {
 	}
 }
 
-func (c *Client) VisitRoomList(response *protocol.RoomListResponse) {
+func (c *Client) RoomList(response *protocol.RoomListResponse) {
 	var sb strings.Builder
 	sb.WriteString("Room Listing:\n")
 	for _, room := range response.Rooms {
@@ -34,7 +34,7 @@ func (c *Client) VisitRoomList(response *protocol.RoomListResponse) {
 	c.output <- sb.String()
 }
 
-func (c *Client) VisitUserList(response *protocol.UserListResponse) {
+func (c *Client) UserList(response *protocol.UserListResponse) {
 	var sb strings.Builder
 	if len(response.Room) > 0 {
 		sb.WriteString(fmt.Sprintf("User Listing in Room %s:\n", response.Room))
@@ -49,10 +49,10 @@ func (c *Client) VisitUserList(response *protocol.UserListResponse) {
 	c.output <- sb.String()
 }
 
-func (c *Client) VisitRoomMessage(response *protocol.RoomMessageResponse) {
+func (c *Client) RoomMessage(response *protocol.RoomMessageResponse) {
 	c.output <- fmt.Sprintf("%s in %s> %s", response.Sender, response.Room, response.Text)
 }
 
-func (c *Client) VisitUserMessage(response *protocol.UserMessageResponse) {
+func (c *Client) UserMessage(response *protocol.UserMessageResponse) {
 	c.output <- fmt.Sprintf("%s to you> %s", response.Sender, response.Text)
 }
