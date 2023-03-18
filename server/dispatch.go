@@ -21,13 +21,6 @@ func (cu *connectedUser) requireConnected() bool {
 	return true
 }
 
-func (cu *connectedUser) sendFatalError(errorType protocol.ErrorType, info string) {
-	cu.outgoing <- &protocol.FatalErrorResponse{
-		Error: errorType,
-		Info:  info,
-	}
-}
-
 func (cu *connectedUser) Keepalive(request *protocol.KeepaliveRequest) {}
 
 func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
