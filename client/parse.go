@@ -2,6 +2,7 @@ package client
 
 import (
 	"strings"
+	"time"
 
 	"github.com/mnxn/chat/protocol"
 )
@@ -119,6 +120,6 @@ func (c *Client) parse(input string) {
 
 	case "quit":
 		c.outgoing <- &protocol.DisconnectRequest{}
-		c.done <- struct{}{}
+		c.conn.SetReadDeadline(time.Now())
 	}
 }

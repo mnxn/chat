@@ -2,8 +2,8 @@ package client
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"sync"
@@ -24,7 +24,8 @@ type Client struct {
 	output   chan string
 	incoming chan protocol.ServerResponse
 	outgoing chan protocol.ClientRequest
-	done     chan struct{}
+
+	conn net.Conn
 }
 
 func NewClient(name, host string, port int) *Client {
@@ -40,42 +41,20 @@ func NewClient(name, host string, port int) *Client {
 		output:   make(chan string),
 		incoming: make(chan protocol.ServerResponse),
 		outgoing: make(chan protocol.ClientRequest),
-		done:     make(chan struct{}),
+
+		conn: nil,
 	}
 }
 
 func (c *Client) Run() error {
-	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
+	var err error
+	c.conn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", c.host, c.port))
 	if err != nil {
 		return fmt.Errorf("error dialing: %w", err)
 	}
-	defer conn.Close()
+	defer c.conn.Close()
 
-	fmt.Println("connected.")
-	fmt.Println()
-
-	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			c.input <- scanner.Text()
-		}
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintf(os.Stderr, "error reading input: %s", err)
-		}
-	}()
-
-	go func() {
-		for {
-			response, err := protocol.DecodeServerResponse(conn)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "error receiving message: %w", err)
-				log.Fatalln("exiting")
-			}
-			c.incoming <- response
-		}
-	}()
-
-	err = protocol.EncodeClientRequest(conn, &protocol.ConnectRequest{
+	err = protocol.EncodeClientRequest(c.conn, &protocol.ConnectRequest{
 		Version: 1,
 		Name:    c.name,
 	})
@@ -83,10 +62,40 @@ func (c *Client) Run() error {
 		return fmt.Errorf("error initiating connection: %w", err)
 	}
 
+	fmt.Println("connected.")
+	fmt.Println()
+
+	scannerErr := make(chan error)
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			c.input <- scanner.Text()
+		}
+		if err := scanner.Err(); err != nil {
+			scannerErr <- err
+		}
+	}()
+
+	decodeErr := make(chan error)
+	go func() {
+		response, err := protocol.DecodeServerResponse(c.conn)
+		for err == nil {
+			c.incoming <- response
+			response, err = protocol.DecodeServerResponse(c.conn)
+		}
+		decodeErr <- err
+	}()
+
 	for {
 		select {
+		case input := <-c.input:
+			go c.parse(input)
+
+		case output := <-c.output:
+			fmt.Print(output)
+
 		case request := <-c.outgoing:
-			err = protocol.EncodeClientRequest(conn, request)
+			err = protocol.EncodeClientRequest(c.conn, request)
 			if err != nil {
 				return fmt.Errorf("error sending request: %w", err)
 			}
@@ -94,14 +103,14 @@ func (c *Client) Run() error {
 		case response := <-c.incoming:
 			go response.Accept(c)
 
-		case input := <-c.input:
-			go c.parse(input)
+		case err := <-decodeErr:
+			if errors.Is(err, os.ErrDeadlineExceeded) {
+				return nil
+			}
+			return fmt.Errorf("error receiving response: %w", err)
 
-		case output := <-c.output:
-			fmt.Print(output)
-
-		case <-c.done:
-			return nil
+		case err := <-scannerErr:
+			return fmt.Errorf("error reading input: %w", err)
 		}
 	}
 }
