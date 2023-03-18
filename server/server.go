@@ -154,6 +154,18 @@ func (s *Server) handle(conn net.Conn) {
 	cu.server.general.users[cu.name] = cu.user
 	cu.server.general.usersMutex.Unlock()
 
+	defer func() {
+		s.usersMutex.Lock()
+		delete(s.users, cu.name)
+		s.usersMutex.Unlock()
+		for _, room := range s.rooms {
+			room.usersMutex.Lock()
+			delete(s.users, cu.name)
+			room.usersMutex.Unlock()
+		}
+		s.logger.Printf("user removed: %s\n", connect.Name)
+	}()
+
 	go func() {
 		for {
 			request, err := protocol.DecodeClientRequest(conn)
@@ -179,15 +191,7 @@ func (s *Server) handle(conn net.Conn) {
 				return
 			}
 		case <-cu.done:
-			s.usersMutex.Lock()
-			delete(s.users, cu.name)
-			s.usersMutex.Unlock()
-			for _, room := range s.rooms {
-				room.usersMutex.Lock()
-				delete(s.users, cu.name)
-				room.usersMutex.Unlock()
-			}
-			s.logger.Printf("user removed: %s\n", connect.Name)
+
 			return
 		}
 	}
