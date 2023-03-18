@@ -2,8 +2,8 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net"
-	"os"
 	"strings"
 	"sync"
 
@@ -32,6 +32,8 @@ type Server struct {
 	roomsMutex sync.RWMutex
 
 	room
+
+	logger *log.Logger
 }
 
 type connectedUser struct {
@@ -39,7 +41,7 @@ type connectedUser struct {
 	server *Server
 }
 
-func NewServer(host string, port int) *Server {
+func NewServer(host string, port int, logger *log.Logger) *Server {
 	general := &room{
 		users:      make(map[string]*user),
 		usersMutex: sync.RWMutex{},
@@ -58,20 +60,23 @@ func NewServer(host string, port int) *Server {
 			users:      make(map[string]*user),
 			usersMutex: sync.RWMutex{},
 		},
+
+		logger: logger,
 	}
 }
 
 func (s *Server) Run() error {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.host, s.port))
 	if err != nil {
-		return fmt.Errorf("error listening: %w", err)
+		return fmt.Errorf("error starting tcp server: %w", err)
 	}
 	defer listener.Close()
 
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			return fmt.Errorf("error accepting connection: %w", err)
+			s.logger.Printf("error accepting connection: %s", err.Error())
+			return nil
 		}
 
 		go s.handle(conn)
@@ -83,9 +88,11 @@ func (s *Server) handle(conn net.Conn) {
 
 	request, err := protocol.DecodeClientRequest(conn)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "decode error: %s\n", err)
+		s.logger.Printf("decode error: %s\n", err)
 		return
 	}
+	s.logger.Printf("initial request from %v: %#v\n", conn.RemoteAddr(), request)
+
 	connect, ok := request.(*protocol.ConnectRequest)
 	if !ok {
 		err := protocol.EncodeServerResponse(conn, &protocol.FatalErrorResponse{
@@ -93,7 +100,7 @@ func (s *Server) handle(conn net.Conn) {
 			Info:  "client not connected",
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error encoding response: %v", err)
+			s.logger.Printf("error encoding response: %v", err)
 		}
 		return
 	}
@@ -103,7 +110,7 @@ func (s *Server) handle(conn net.Conn) {
 			Info:  "expected version 1",
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error encoding response: %v", err)
+			s.logger.Printf("error encoding response: %v", err)
 		}
 		return
 	}
@@ -113,7 +120,7 @@ func (s *Server) handle(conn net.Conn) {
 			Info:  "username cannot contain spaces",
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error encoding response: %v", err)
+			s.logger.Printf("error encoding response: %v", err)
 		}
 		return
 	}
@@ -135,7 +142,7 @@ func (s *Server) handle(conn net.Conn) {
 			Info:  "username already exists",
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error encoding response: %v", err)
+			s.logger.Printf("error encoding response: %v", err)
 		}
 		s.usersMutex.Unlock()
 		return
@@ -151,7 +158,7 @@ func (s *Server) handle(conn net.Conn) {
 		for {
 			request, err := protocol.DecodeClientRequest(conn)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "decode error: %s\n", err)
+				s.logger.Printf("decode error: %s\n", err)
 				cu.done <- struct{}{}
 				return
 			}
@@ -162,11 +169,13 @@ func (s *Server) handle(conn net.Conn) {
 	for {
 		select {
 		case request := <-cu.incoming:
+			s.logger.Printf("received request from %s: %#v\n", cu.name, request)
 			go request.Accept(cu)
 		case response := <-cu.outgoing:
+			s.logger.Printf("sent response to %s: %#v\n", cu.name, response)
 			err = protocol.EncodeServerResponse(conn, response)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "encode response error: %s\n", err)
+				s.logger.Printf("encode response error: %s\n", err)
 				return
 			}
 		case <-cu.done:
@@ -178,7 +187,7 @@ func (s *Server) handle(conn net.Conn) {
 				delete(s.users, cu.name)
 				room.usersMutex.Unlock()
 			}
-			fmt.Fprintf(os.Stderr, "user removed: %s\n", connect.Name)
+			s.logger.Printf("user removed: %s\n", connect.Name)
 			return
 		}
 	}
