@@ -3,6 +3,7 @@ package server
 import (
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mnxn/chat/protocol"
 )
@@ -15,7 +16,7 @@ func (cu connectedUser) Connect(request *protocol.ConnectRequest) {
 }
 
 func (cu connectedUser) Disconnect(request *protocol.DisconnectRequest) {
-	cu.done <- struct{}{}
+	cu.conn.SetReadDeadline(time.Now())
 }
 
 func (cu connectedUser) ListRooms(request *protocol.ListRoomsRequest) {

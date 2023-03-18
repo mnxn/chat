@@ -1,9 +1,11 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"sync"
 
@@ -14,7 +16,6 @@ type user struct {
 	name     string
 	incoming chan protocol.ClientRequest
 	outgoing chan protocol.ServerResponse
-	done     chan struct{}
 }
 
 type room struct {
@@ -39,6 +40,7 @@ type Server struct {
 type connectedUser struct {
 	*user
 	server *Server
+	conn   net.Conn
 }
 
 func NewServer(host string, port int, logger *log.Logger) *Server {
@@ -130,9 +132,9 @@ func (s *Server) handle(conn net.Conn) {
 			name:     connect.Name,
 			incoming: make(chan protocol.ClientRequest),
 			outgoing: make(chan protocol.ServerResponse),
-			done:     make(chan struct{}),
 		},
 		server: s,
+		conn:   conn,
 	}
 
 	s.usersMutex.Lock()
@@ -166,23 +168,18 @@ func (s *Server) handle(conn net.Conn) {
 		s.logger.Printf("user removed: %s\n", connect.Name)
 	}()
 
+	decodeErr := make(chan error)
 	go func() {
-		for {
-			request, err := protocol.DecodeClientRequest(conn)
-			if err != nil {
-				s.logger.Printf("decode error: %s\n", err)
-				cu.done <- struct{}{}
-				return
-			}
-			cu.incoming <- request
+		response, err := protocol.DecodeClientRequest(conn)
+		for err == nil {
+			cu.incoming <- response
+			response, err = protocol.DecodeClientRequest(conn)
 		}
+		decodeErr <- err
 	}()
 
 	for {
 		select {
-		case request := <-cu.incoming:
-			s.logger.Printf("received request from %s: %#v\n", cu.name, request)
-			go request.Accept(cu)
 		case response := <-cu.outgoing:
 			s.logger.Printf("sent response to %s: %#v\n", cu.name, response)
 			err = protocol.EncodeServerResponse(conn, response)
@@ -190,8 +187,15 @@ func (s *Server) handle(conn net.Conn) {
 				s.logger.Printf("encode response error: %s\n", err)
 				return
 			}
-		case <-cu.done:
 
+		case request := <-cu.incoming:
+			s.logger.Printf("received request from %s: %#v\n", cu.name, request)
+			go request.Accept(cu)
+
+		case err := <-decodeErr:
+			if !errors.Is(err, os.ErrDeadlineExceeded) {
+				s.logger.Printf("error receiving request: %s\n", err)
+			}
 			return
 		}
 	}
