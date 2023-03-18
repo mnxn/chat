@@ -112,7 +112,7 @@ func (cu *connectedUser) ListUsers(request *protocol.ListUsersRequest) {
 		if !ok {
 			cu.outgoing <- &protocol.ErrorResponse{
 				Error: protocol.MissingRoom,
-				Info:  "",
+				Info:  request.Room,
 			}
 			return
 		}
@@ -150,7 +150,7 @@ func (cu *connectedUser) MessageRoom(request *protocol.MessageRoomRequest) {
 	if !ok {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.MissingRoom,
-			Info:  "",
+			Info:  request.Room,
 		}
 		return
 	}
@@ -179,7 +179,7 @@ func (cu *connectedUser) MessageUser(request *protocol.MessageUserRequest) {
 	if !ok {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.MissingUser,
-			Info:  "",
+			Info:  request.User,
 		}
 		return
 	}
@@ -198,7 +198,7 @@ func (cu *connectedUser) CreateRoom(request *protocol.CreateRoomRequest) {
 	if strings.ContainsRune(request.Room, ' ') {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.InvalidRoom,
-			Info:  "",
+			Info:  request.Room,
 		}
 		return
 	}
@@ -207,7 +207,7 @@ func (cu *connectedUser) CreateRoom(request *protocol.CreateRoomRequest) {
 	if _, ok := cu.server.rooms[request.Room]; ok {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.ExistingRoom,
-			Info:  "",
+			Info:  request.Room,
 		}
 		cu.server.roomsMutex.Unlock()
 		return
@@ -230,7 +230,7 @@ func (cu *connectedUser) JoinRoom(request *protocol.JoinRoomRequest) {
 	if !ok {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.MissingRoom,
-			Info:  "",
+			Info:  request.Room,
 		}
 		return
 	}
@@ -251,7 +251,7 @@ func (cu *connectedUser) LeaveRoom(request *protocol.LeaveRoomRequest) {
 	if !ok {
 		cu.outgoing <- &protocol.ErrorResponse{
 			Error: protocol.MissingRoom,
-			Info:  "",
+			Info:  request.Room,
 		}
 		cu.server.roomsMutex.Unlock()
 		return
