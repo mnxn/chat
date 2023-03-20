@@ -75,9 +75,7 @@ func (c *Client) Run() error {
 		for scanner.Scan() {
 			c.input <- scanner.Text()
 		}
-		if err := scanner.Err(); err != nil {
-			scannerErr <- err
-		}
+		scannerErr <- scanner.Err()
 	}()
 
 	decodeErr := make(chan error)
@@ -120,7 +118,10 @@ func (c *Client) Run() error {
 			return fmt.Errorf("error receiving response: %w", err)
 
 		case err := <-scannerErr:
-			return fmt.Errorf("error reading input: %w", err)
+			if err != nil {
+				return fmt.Errorf("error reading input: %w", err)
+			}
+			return nil
 		}
 	}
 }
