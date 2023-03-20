@@ -47,8 +47,6 @@ func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
 		return
 	}
 
-	cu.atomicName.Store(&request.Name)
-
 	cu.server.usersMutex.Lock()
 	if _, ok := cu.server.users[request.Name]; ok {
 		cu.outgoing <- &protocol.FatalErrorResponse{
@@ -60,6 +58,8 @@ func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
 	}
 	cu.server.users[request.Name] = cu.user
 	cu.server.usersMutex.Unlock()
+
+	cu.atomicName.Store(&request.Name)
 
 	cu.server.general.usersMutex.Lock()
 	cu.server.general.users[request.Name] = cu.user
