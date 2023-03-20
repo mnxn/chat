@@ -19,6 +19,11 @@ var (
 func main() {
 	flag.Parse()
 
+	if *keepalive <= 0 || 30 < *keepalive {
+		fmt.Fprintln(os.Stderr, "keepalive must be between 1 and 30.")
+		return
+	}
+
 	fmt.Printf("connecting to %s:%d\n", *host, *port)
 
 	if *name == "" {
