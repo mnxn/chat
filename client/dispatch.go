@@ -28,29 +28,25 @@ func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 func (c *Client) RoomList(response *protocol.RoomListResponse) {
 	var sb strings.Builder
 	if response.User == "" {
-		sb.WriteString("   Room Listing in Server:\n")
+		fmt.Fprintln(&sb, "   Room Listing in Server:")
 	} else {
-		sb.WriteString(fmt.Sprintf("   Room Listing for User %s:\n", response.User))
+		fmt.Fprintf(&sb, "   Room Listing for User %s:\n", response.User)
 	}
 	for _, room := range response.Rooms {
-		sb.WriteString("      ")
-		sb.WriteString(room)
-		sb.WriteRune('\n')
+		fmt.Fprintf(&sb, "      %s\n", room)
 	}
 	c.output <- sb.String()
 }
 
 func (c *Client) UserList(response *protocol.UserListResponse) {
 	var sb strings.Builder
-	if len(response.Room) > 0 {
-		sb.WriteString(fmt.Sprintf("   User Listing in Room %s:\n", response.Room))
+	if response.Room == "" {
+		fmt.Fprintln(&sb, "   User Listing in Server:")
 	} else {
-		sb.WriteString("   User Listing in Server:\n")
+		fmt.Fprintf(&sb, "   User Listing in Room %s:\n", response.Room)
 	}
-	for _, room := range response.Users {
-		sb.WriteString("      ")
-		sb.WriteString(room)
-		sb.WriteRune('\n')
+	for _, user := range response.Users {
+		fmt.Fprintf(&sb, "      %s\n", user)
 	}
 	c.output <- sb.String()
 }
