@@ -296,6 +296,7 @@ func (fe *FatalErrorResponse) decodeResponse(r io.Reader) error {
 }
 
 type RoomListResponse struct {
+	User  string
 	Count uint32
 	Rooms []string
 }
@@ -303,8 +304,13 @@ type RoomListResponse struct {
 func (*RoomListResponse) ResponseType() ResponseType { return RoomList }
 
 func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
+	err := encodeString(w, rl.User)
+	if err != nil {
+		return fmt.Errorf("encode RoomListResponse.User: %w", err)
+	}
+
 	count := uint32(len(rl.Rooms))
-	err := encodeInt(w, count)
+	err = encodeInt(w, count)
 	if err != nil {
 		return fmt.Errorf("encode RoomListResponse.Count: %w", err)
 	}
@@ -320,7 +326,12 @@ func (rl *RoomListResponse) encodeResponse(w io.Writer) error {
 }
 
 func (rl *RoomListResponse) decodeResponse(r io.Reader) error {
-	err := decodeInt(r, &rl.Count)
+	err := decodeString(r, &rl.User)
+	if err != nil {
+		return fmt.Errorf("decode RoomListResponse.User: %w", err)
+	}
+
+	err = decodeInt(r, &rl.Count)
 	if err != nil {
 		return fmt.Errorf("decode RoomListResponse.Count: %w", err)
 	}

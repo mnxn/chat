@@ -30,6 +30,13 @@ type room struct {
 	usersMutex sync.RWMutex
 }
 
+func (r *room) contains(userName string) bool {
+	r.usersMutex.RLock()
+	_, ok := r.users[userName]
+	r.usersMutex.RUnlock()
+	return ok
+}
+
 type user struct {
 	atomicName atomic.Pointer[string]
 	incoming   chan protocol.ClientRequest

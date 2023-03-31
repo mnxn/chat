@@ -82,16 +82,19 @@ var serverResponseTests = []struct {
 
 	{
 		&RoomListResponse{
+			User:  "",
 			Count: 0,
 			Rooms: []string{},
 		},
 		[]byte{
 			0, 0, 0, 3, // RoomList
 			0, 0, 0, 0, // uint32(0)
+			0, 0, 0, 0, // uint32(0)
 		},
 	},
 	{
 		&RoomListResponse{
+			User:  "me",
 			Count: 3,
 			Rooms: []string{
 				"A",
@@ -101,6 +104,9 @@ var serverResponseTests = []struct {
 		},
 		[]byte{
 			0, 0, 0, 3, // RoomList
+
+			0, 0, 0, 2, // uint32(2)
+			109, 101, // "me"
 
 			0, 0, 0, 3, // uint32(3)
 

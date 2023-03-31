@@ -34,9 +34,23 @@ var clientRequestTests = []struct {
 	},
 
 	{
-		&ListRoomsRequest{},
+		&ListRoomsRequest{
+			User: "",
+		},
 		[]byte{
 			0, 0, 0, 3, // ListRooms
+			0, 0, 0, 0, // uint32(0)
+		},
+	},
+	{
+		&ListRoomsRequest{
+			User: "me",
+		},
+		[]byte{
+			0, 0, 0, 3, // ListRooms
+
+			0, 0, 0, 2, // uint32(2)
+			109, 101, // "me"
 		},
 	},
 

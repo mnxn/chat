@@ -276,13 +276,29 @@ func (lr *LeaveRoomRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
-type ListRoomsRequest struct{}
+type ListRoomsRequest struct {
+	User string
+}
 
 func (*ListRoomsRequest) RequestType() RequestType { return ListRooms }
 
-func (*ListRoomsRequest) encodeRequest(w io.Writer) error { return nil }
+func (lr *ListRoomsRequest) encodeRequest(w io.Writer) error {
+	err := encodeString(w, lr.User)
+	if err != nil {
+		return fmt.Errorf("encode ListRoomsRequest.User: %w", err)
+	}
 
-func (*ListRoomsRequest) decodeRequest(r io.Reader) error { return nil }
+	return nil
+}
+
+func (lr *ListRoomsRequest) decodeRequest(r io.Reader) error {
+	err := decodeString(r, &lr.User)
+	if err != nil {
+		return fmt.Errorf("decode ListRoomsRequest.User: %w", err)
+	}
+
+	return nil
+}
 
 type ListUsersRequest struct {
 	Room string

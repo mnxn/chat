@@ -81,12 +81,15 @@ func (cu *connectedUser) ListRooms(request *protocol.ListRoomsRequest) {
 
 	cu.server.roomsMutex.RLock()
 	rooms := make([]string, 0, len(cu.server.rooms))
-	for room := range cu.server.rooms {
-		rooms = append(rooms, room)
+	for roomName, room := range cu.server.rooms {
+		if request.User == "" || room.contains(request.User) {
+			rooms = append(rooms, roomName)
+		}
 	}
 	cu.server.roomsMutex.RUnlock()
 
 	cu.outgoing <- &protocol.RoomListResponse{
+		User:  request.User,
 		Count: uint32(len(rooms)),
 		Rooms: rooms,
 	}

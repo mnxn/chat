@@ -27,7 +27,11 @@ func (c *Client) FatalError(response *protocol.FatalErrorResponse) {
 
 func (c *Client) RoomList(response *protocol.RoomListResponse) {
 	var sb strings.Builder
-	sb.WriteString("   Room Listing:\n")
+	if response.User == "" {
+		sb.WriteString("   Room Listing in Server:\n")
+	} else {
+		sb.WriteString(fmt.Sprintf("   Room Listing for User %s:\n", response.User))
+	}
 	for _, room := range response.Rooms {
 		sb.WriteString("      ")
 		sb.WriteString(room)

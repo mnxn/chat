@@ -13,6 +13,8 @@ const helpMessage = `   command help:
       /current           show current room
       /switch [room]     switch current room
       /rooms             list rooms in the server
+      /rooms  [user]     list rooms joined by a user
+      /joined            list rooms joined by self
       /users             list users in the server
       /users  [room]     list users in a room
       /msg    [rooms]    send a message to specific rooms
@@ -58,7 +60,18 @@ func (c *Client) parse(input string) {
 		c.atomicCurrent.Store(&split[1])
 
 	case "rooms":
-		c.outgoing <- &protocol.ListRoomsRequest{}
+		var user string
+		if len(split) >= 2 {
+			user = split[1]
+		}
+		c.outgoing <- &protocol.ListRoomsRequest{
+			User: user,
+		}
+
+	case "joined":
+		c.outgoing <- &protocol.ListRoomsRequest{
+			User: c.name,
+		}
 
 	case "users":
 		var room string
