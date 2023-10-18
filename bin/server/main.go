@@ -2,10 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/mnxn/chat/server"
 )
@@ -13,11 +10,6 @@ import (
 var port = flag.Int("port", 5555, "chat server port number")
 
 func main() {
-	flag.Usage = func() {
-		exe := filepath.Base(os.Args[0])
-		fmt.Fprintf(flag.CommandLine.Output(), "usage: %s [options] name\noptions:\n", exe)
-		flag.PrintDefaults()
-	}
 	flag.Parse()
 
 	logger := log.Default()
