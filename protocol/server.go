@@ -11,6 +11,7 @@ var (
 	ErrInvalidErrorType    = errors.New("invalid ErrorType value")
 )
 
+// ServerResponse messages originate in the server before being received by relevant clients.
 type ServerResponse interface {
 	ResponseType() ResponseType
 	Accept(ResponseVisitor)
@@ -134,17 +135,46 @@ func decodeResponseType(r io.Reader, typ *ResponseType) error {
 type ErrorType uint32
 
 const (
+	// The client is attempting to send a request without first sending a ConnectRequest.
 	NotConnected ErrorType = 1 + iota
+
+	// The client is already connected and is trying to connect again.
 	AlreadyConnected
+
+	// The server had an internal error that prevented it from completing the request.
 	InternalError
+
+	// The client sent a request that was not able to be decoded.
 	MalformedRequest
+
+	// The client is attempting to connect with a version of the protocol that does not match the server's supported versions.
+	//   - This error MUST be sent in a FatalError server message.
 	UnsupportedVersion
+
+	// The requested room has not been created on the server or has been removed from the room list.
 	MissingRoom
+
+	// The request user has not connected to the server or has already disconnected.
 	MissingUser
+
+	// The requested room has already been created. It cannot be created again.
 	ExistingRoom
+
+	// The client is attempting to connect with a name that is already in-use on the server.
+	//   - This error MUST be sent in a FatalError server message.
 	ExistingUser
+
+	// The requested room name does not satisfy the server's room naming requirements.
+	//  - The server SHOULD include additional information that explains the room naming requirements.
 	InvalidRoom
+
+	// The client is attempting to connect with a name that does not satisfy the server's user naming requirements.
+	//   - The server SHOULD include additional information that explains the user naming requirements.
+	//   - This error MUST be sent in a FatalError server message.
 	InvalidUser
+
+	// The client is attempting to send a chat message with text that does not satisfy the server's text content requirements.
+	//   - The server SHOULD include additional information that explains the text content requirements.
 	InvalidText
 )
 
@@ -225,9 +255,10 @@ func decodeErrorType(r io.Reader, e *ErrorType) error {
 	return nil
 }
 
+// An ErrorResponse is sent to clients when there is an error performing an operation.
 type ErrorResponse struct {
-	Error ErrorType
-	Info  string
+	Error ErrorType // The error code corresponding to the error. See ErrorType.
+	Info  string    // Additional information about the cause of the error
 }
 
 func (*ErrorResponse) ResponseType() ResponseType { return Error }
@@ -260,9 +291,11 @@ func (e *ErrorResponse) decodeResponse(r io.Reader) error {
 	return nil
 }
 
+// A FatalErrorResponse is sent to clients when there is an error performing an operation.
+//   - Clients MUST disconnect from the server following this message.
 type FatalErrorResponse struct {
-	Error ErrorType
-	Info  string
+	Error ErrorType // The error code corresponding to the error. See ErrorType.
+	Info  string    // Additional information about the cause of the error.
 }
 
 func (*FatalErrorResponse) ResponseType() ResponseType { return FatalError }
@@ -295,10 +328,11 @@ func (fe *FatalErrorResponse) decodeResponse(r io.Reader) error {
 	return nil
 }
 
+// A RoomListResponse is sent as a response to clients that ask for the list of rooms.
 type RoomListResponse struct {
-	User  string
-	Count uint32
-	Rooms []string
+	User  string   // The user who has joined the rooms. Empty if the response is for the list of rooms in the entire server.
+	Count uint32   // The number of rooms in the response.
+	Rooms []string // The array of room names.
 }
 
 func (*RoomListResponse) ResponseType() ResponseType { return RoomList }
@@ -347,10 +381,11 @@ func (rl *RoomListResponse) decodeResponse(r io.Reader) error {
 	return nil
 }
 
+// A UserListResponse is sent as a response to clients that ask for a list of users.
 type UserListResponse struct {
-	Room  string
-	Count uint32
-	Users []string
+	Room  string   // The room the users are located in. Empty if the response is for the list of users in the entire server.
+	Count uint32   // The number of users in the room/server.
+	Users []string // The array of user names.
 }
 
 func (*UserListResponse) ResponseType() ResponseType { return UserList }
@@ -399,10 +434,11 @@ func (ul *UserListResponse) decodeResponse(r io.Reader) error {
 	return nil
 }
 
+// A RoomMessageResponse is sent when another user has sent a message in a room that the client user has joined.
 type RoomMessageResponse struct {
-	Room   string
-	Sender string
-	Text   string
+	Room   string // The name of the room the chat message was sent from.
+	Sender string // The name of the user that sent the direct message.
+	Text   string // The text content of the chat message.
 }
 
 func (*RoomMessageResponse) ResponseType() ResponseType { return RoomMessage }
@@ -445,9 +481,10 @@ func (rm *RoomMessageResponse) decodeResponse(r io.Reader) error {
 	return nil
 }
 
+// A UserMessageResponse is sent when another user has sent a direct message to the client user.
 type UserMessageResponse struct {
-	Sender string
-	Text   string
+	Sender string // The name of the user that sent the direct message.
+	Text   string // The text content of the chat message.
 }
 
 func (*UserMessageResponse) ResponseType() ResponseType { return UserMessage }

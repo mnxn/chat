@@ -8,6 +8,7 @@ import (
 
 var ErrInvalidRequestType = errors.New("invalid RequestType value")
 
+// ClientRequest messages originate in the clients before being received by the server and responded to.
 type ClientRequest interface {
 	RequestType() RequestType
 	Accept(RequestVisitor)
@@ -153,6 +154,7 @@ func decodeRequestType(r io.Reader, typ *RequestType) error {
 	return nil
 }
 
+// KeepaliveRequest messages MUST be sent to the server at least every 30 seconds to prevent the TCP connection from closing.
 type KeepaliveRequest struct{}
 
 func (*KeepaliveRequest) RequestType() RequestType { return Keepalive }
@@ -161,9 +163,12 @@ func (*KeepaliveRequest) encodeRequest(w io.Writer) error { return nil }
 
 func (*KeepaliveRequest) decodeRequest(r io.Reader) error { return nil }
 
+// This ConnectRequest MUST be sent to a server at the beginning of a connection.
+//   - The server MAY respond with an error message.
+//   - The server MUST update the user list if the client connected successfully.
 type ConnectRequest struct {
-	Version uint32
-	Name    string
+	Version uint32 // The version of the protocol that the client is using.
+	Name    string // The display name the user wishes to connect with.
 }
 
 func (*ConnectRequest) RequestType() RequestType { return Connect }
@@ -196,6 +201,11 @@ func (c *ConnectRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// The DisconnectRequest MUST be sent before a client intentionally disconnects from the server.
+//   - The server MUST remove the user from the active user list, notify other users,
+//     and close the TCP connection immediately upon receiving this message.
+//   - If the server notices that the client closed the TCP connection without sending this message,
+//     it MUST also remove the user from the active user list and notify the other users.
 type DisconnectRequest struct{}
 
 func (*DisconnectRequest) RequestType() RequestType { return Disconnect }
@@ -204,8 +214,12 @@ func (*DisconnectRequest) encodeRequest(w io.Writer) error { return nil }
 
 func (*DisconnectRequest) decodeRequest(r io.Reader) error { return nil }
 
+// A CreateRoomRequest should be sent by the client to create a new room.
+//   - The server MAY respond with an error message.
+//   - The server MUST update the room list if the room was created successfully.
+//   - The server MUST NOT add the user to the newly created room until the client joins with a JoinRoomRequest.
 type CreateRoomRequest struct {
-	Room string
+	Room string // Desired name of the new room.
 }
 
 func (*CreateRoomRequest) RequestType() RequestType { return CreateRoom }
@@ -228,8 +242,11 @@ func (cr *CreateRoomRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A CreateRoomRequest should be sent by the client to join a room.
+//   - The server MAY respond with an error message.
+//   - The server MUST update the room's list of users if the room was joined successfully.
 type JoinRoomRequest struct {
-	Room string
+	Room string // Desired name of the room to join.
 }
 
 func (*JoinRoomRequest) RequestType() RequestType { return JoinRoom }
@@ -252,8 +269,12 @@ func (jr *JoinRoomRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A LeaveRoomRequest should be sent by the client to leave a room.
+//   - The server MAY respond with an error message.
+//   - The server MUST update the room's list of users if the room was left successfully.
+//   - The server MUST remove a room from the room list if there are no users remaining.
 type LeaveRoomRequest struct {
-	Room string
+	Room string // Desired name of the room to leave.
 }
 
 func (*LeaveRoomRequest) RequestType() RequestType { return LeaveRoom }
@@ -276,7 +297,11 @@ func (lr *LeaveRoomRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A ListRoomsRequest should be sent by the client to obtain a list of rooms.
+//   - The server MUST respond with an error message or a RoomListResponse.
 type ListRoomsRequest struct {
+	//  The name of the user to get a list of joined rooms for.
+	//  - If the user name is empty, the server MUST respond with a list of rooms for the entire server.
 	User string
 }
 
@@ -300,7 +325,11 @@ func (lr *ListRoomsRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A ListUsersRequest should be sent by the client to obtain a list of users in  room or the entire server.
+//   - The server must respond with an error message or a RoomListResponse.
 type ListUsersRequest struct {
+	// The name of the room to get a list of users for.
+	//   - If the room name is empty, the server MUST respond with a list of users for the entire server.
 	Room string
 }
 
@@ -324,9 +353,12 @@ func (lu *ListUsersRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A MessageRoomRequest should be sent by the client to send a chat message to a room.
+//   - The server MAY respond with an error message.
+//   - The server MUST forward the message to other users in the room if sending the chat message was successful.
 type MessageRoomRequest struct {
-	Room string
-	Text string
+	Room string // The name of the room to send the chat message to.
+	Text string // The text content of the chat message.
 }
 
 func (*MessageRoomRequest) RequestType() RequestType { return MessageRoom }
@@ -359,6 +391,9 @@ func (mr *MessageRoomRequest) decodeRequest(r io.Reader) error {
 	return nil
 }
 
+// A MessageUserRequest should be sent by the client to send a chat message to another user.
+//   - The server MAY respond with an error message.
+//   - The server MUST forward the message to the other user if sending the chat message was successful.
 type MessageUserRequest struct {
 	User string
 	Text string
