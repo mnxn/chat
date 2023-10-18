@@ -159,9 +159,9 @@ type KeepaliveRequest struct{}
 
 func (*KeepaliveRequest) RequestType() RequestType { return Keepalive }
 
-func (*KeepaliveRequest) encodeRequest(w io.Writer) error { return nil }
+func (*KeepaliveRequest) encodeRequest(io.Writer) error { return nil }
 
-func (*KeepaliveRequest) decodeRequest(r io.Reader) error { return nil }
+func (*KeepaliveRequest) decodeRequest(io.Reader) error { return nil }
 
 // This ConnectRequest MUST be sent to a server at the beginning of a connection.
 //   - The server MAY respond with an error message.
@@ -210,9 +210,9 @@ type DisconnectRequest struct{}
 
 func (*DisconnectRequest) RequestType() RequestType { return Disconnect }
 
-func (*DisconnectRequest) encodeRequest(w io.Writer) error { return nil }
+func (*DisconnectRequest) encodeRequest(io.Writer) error { return nil }
 
-func (*DisconnectRequest) decodeRequest(r io.Reader) error { return nil }
+func (*DisconnectRequest) decodeRequest(io.Reader) error { return nil }
 
 // A CreateRoomRequest should be sent by the client to create a new room.
 //   - The server MAY respond with an error message.

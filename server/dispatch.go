@@ -21,7 +21,7 @@ func (cu *connectedUser) requireConnected() bool {
 	return true
 }
 
-func (cu *connectedUser) Keepalive(request *protocol.KeepaliveRequest) {}
+func (cu *connectedUser) Keepalive(*protocol.KeepaliveRequest) {}
 
 func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
 	if cu.connected() {
@@ -66,7 +66,7 @@ func (cu *connectedUser) Connect(request *protocol.ConnectRequest) {
 	cu.server.general.usersMutex.Unlock()
 }
 
-func (cu *connectedUser) Disconnect(request *protocol.DisconnectRequest) {
+func (cu *connectedUser) Disconnect(*protocol.DisconnectRequest) {
 	if !cu.requireConnected() {
 		return
 	}
